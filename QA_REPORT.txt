@@ -1,0 +1,95 @@
+GPCS PORTAL — FINAL CLEAN-STATE QA REPORT
+Generated: 2026-09-02T16:30:20.110752+00:00 UTC
+Project root: GPCS_Portal_Railway_FINAL_WORKING
+
+IMPORTANT
+- This report records checks actually executed against the current working tree.
+- It does NOT claim successful live Railway/MySQL/SMTP/iLovePDF browser-runtime testing.
+- ZIP creation has NOT been performed at this stage.
+
+1) INVENTORY
+- Total files in clean working tree: 119
+- PHP files: 82
+- External JavaScript files: 1
+- Blade views: 10
+- Zero-byte files: 0
+
+2) PHP / JAVASCRIPT SYNTAX
+- php -l executed on every *.php file: 82 checked, 0 errors.
+- Detailed per-file output: PHP_LINT_REPORT.txt
+- node --check executed on external *.js files: 1 checked, 0 errors.
+- Portal inline <script> blocks: 7 checked after replacing Blade-only expressions with inert JS literals, 0 syntax errors.
+- Detailed external JS output: JS_LINT_REPORT.txt
+
+3) STATIC CLASS / IMPORT / VIEW / ROUTE CHECKS
+- App classes/interfaces/traits/enums discovered: 42
+- Missing explicit App\... imports: 0
+- Literal Blade/PHP view references checked: 10; missing: 0
+- Named-route candidates discovered: 49
+- Literal route(...) references checked: 31; missing: 0
+- composer.json parse: True
+- railway.json parse: True
+- nixpacks.toml parse: True
+
+4) END-TO-END STATIC MODULE CONNECTIVITY
+  - Auth: CONNECTED (static)
+  - Admin Phase 1: CONNECTED (static)
+  - Paper/Notes Upload: CONNECTED (static)
+  - Gallery: CONNECTED (static)
+  - Compression: CONNECTED (static)
+  - Contact: CONNECTED (static)
+Static-connected means the route/controller/model/service/view-or-front-end bridge references required for the flow were present and cross-checked. It is not a substitute for a live HTTP/database test.
+
+5) SUBJECT MASTER
+- SubjectMasterSeeder rows parsed: 141
+- Unique Branch+Semester+PaperCode+SubjectCode identities: 141
+- Branch counts: {"CS": 36, "EE": 35, "ET": 33, "ME": 37}
+- Reference workbook SHA-256: 15c5a11bd8e7d725bf38ef8a8e885bb49467edcdfa6dad206769c920b1f629af
+- Supplied verified workbook SHA-256: 15c5a11bd8e7d725bf38ef8a8e885bb49467edcdfa6dad206769c920b1f629af
+- Exact workbook checksum match: True
+
+6) RAILWAY / DEPLOYMENT CONFIGURATION
+- Procfile uses Railway $PORT: YES
+- nixpacks.toml uses Railway $PORT: YES
+- railway.json start command uses Railway $PORT: YES
+- Railway MYSQL* mapping documented in .env.example: YES
+- APP_ENV=production / blank APP_KEY / APP_DEBUG=false present: YES
+- iLovePDF variables present: YES
+- MAIL variables present: YES
+- Old setup.sh/setup-hostinger.sh absent: YES
+- Genuine composer.lock unavailable; fake composer.lock absent: YES
+- php.ini upload_max_filesize=205M: YES
+- php.ini post_max_size=220M: YES
+
+Current Railway platform note: railway.json Config-as-Code is deprecated for new services and current Railway uses Railpack by default. The repository therefore documents dashboard deployment settings in RAILWAY_DEPLOYMENT.md while retaining Procfile/nixpacks.toml compatibility files requested for legacy Nixpacks-style deployment.
+
+7) COMPOSER DEPENDENCIES
+- laravel/framework: ^12.0
+- intervention/image: ^3.11
+- ilovepdf/ilovepdf-php: ^1.4
+
+8) QUALITY / SAFETY SCANS
+- Embedded data:image Base64 references: 0
+- Stale 500 MB / 512000 upload markers: 0
+- Executable TODO/FIXME/add-code-here/not-implemented/placeholder-text markers: 0
+- Hardcoded-secret pattern hits in executable/config source: 0
+- Text/code files > 1 MiB: 0
+- portal.blade.php size: 348533 bytes
+- public/assets image files: 4
+
+README contains example Admin bootstrap identity/email and a deliberately non-secret instruction placeholder for ADMIN_PASSWORD. No working Admin password is shipped; AdminSeeder reads ADMIN_IDENTIFIER/ADMIN_EMAIL/ADMIN_PASSWORD from environment and enforces a minimum password length.
+
+9) REPORT / MANIFEST INTEGRITY
+- FILE_MANIFEST.txt is regenerated from the current tree and lists every file path, including report files.
+- SHA256SUMS.txt is regenerated LAST and covers every project file EXCEPT SHA256SUMS.txt itself. A checksum file cannot stably contain its own checksum.
+- Run `sha256sum -c SHA256SUMS.txt` from the project root to verify all listed files.
+
+10) RUNTIME TESTS THAT COULD NOT BE COMPLETED HERE
+- Composer executable available: NO
+- Required PHP extensions currently present among curl/gd/mbstring/pdo_mysql: NONE
+- Therefore composer install/package discovery, php artisan test with vendor/, live MySQL migration/auth flows, SMTP reset delivery, real Intervention/GD encoding, live iLovePDF API calls and an actual Railway deployment were NOT runtime-verified in this environment.
+- These are explicitly NOT marked PASS.
+
+11) CLEAN-STATE RESULT
+Static/source verification result: CLEAN
+ZIP status: NOT CREATED (awaiting user confirmation after this verification stage).

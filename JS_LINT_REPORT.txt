@@ -1,0 +1,5 @@
+GPCS Portal external JavaScript syntax report
+Files checked: 1
+Errors: 0
+
+public/assets/gpcs-backend-bridge.js :: OK

@@ -1,0 +1,4 @@
+<?php
+namespace App\Http\Controllers\Auth;
+use App\Http\Controllers\Controller; use App\Models\User; use Illuminate\Auth\Events\PasswordReset; use Illuminate\Http\Request; use Illuminate\Support\Facades\Hash; use Illuminate\Support\Facades\Password; use Illuminate\Support\Str;
+class ResetPasswordController extends Controller {public function form(Request $r,string $token){return view('auth.reset-password',['token'=>$token,'email'=>$r->query('email')]);}public function reset(Request $r){$v=$r->validate(['token'=>'required','email'=>'required|email','password'=>'required|min:8|confirmed']);$status=Password::reset($v,function(User $u,string $p){$u->forceFill(['password'=>Hash::make($p)])->setRememberToken(Str::random(60));$u->save();event(new PasswordReset($u));});return $status===Password::PASSWORD_RESET?redirect('/#login')->with('status',__($status)):back()->withErrors(['email'=>__($status)]);}}

@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration {public function up(): void {Schema::create('subject_masters',function(Blueprint $t){$t->id();$t->string('paper_code',30);$t->string('subject_code',30);$t->string('paper_name');$t->string('subject_name');$t->string('semester',10);$t->string('branch',10);$t->unique(['branch','semester','paper_code','subject_code'],'subject_master_identity');$t->index(['subject_code','branch','semester']);});}public function down(): void {Schema::dropIfExists('subject_masters');}};

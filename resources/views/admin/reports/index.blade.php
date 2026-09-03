@@ -1,0 +1,1 @@
+@extends('admin.layout') @section('title','Reports') @section('content')<h1>Reports</h1><div class="grid">@foreach($counts as $label=>$value)<div class="card metric"><strong>{{ $value }}</strong><div>{{ ucfirst($label) }}</div></div>@endforeach</div><a class="btn" href="{{ route('admin.reports.csv') }}">Download CSV Report</a>@endsection

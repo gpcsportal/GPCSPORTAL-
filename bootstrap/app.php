@@ -1,0 +1,20 @@
+<?php
+use App\Http\Middleware\AdminIdleTimeout;
+use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsurePortalAccountActive;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(web: __DIR__.'/../routes/web.php', commands: __DIR__.'/../routes/console.php', health: '/up')
+    ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'admin' => EnsureAdmin::class,
+            'admin.idle' => AdminIdleTimeout::class,
+            'account.active' => EnsurePortalAccountActive::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        // Laravel's default exception rendering is appropriate for production when APP_DEBUG=false.
+    })->create();

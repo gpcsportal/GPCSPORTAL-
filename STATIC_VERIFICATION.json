@@ -1,0 +1,81 @@
+{
+  "generated_at_utc": "2026-09-02T16:30:20.074701+00:00",
+  "php": {
+    "files": 82,
+    "errors": [],
+    "version": "8.4.23"
+  },
+  "javascript": {
+    "external_files": 1,
+    "external_errors": [],
+    "inline_blocks": 7,
+    "inline_errors": []
+  },
+  "config_parse": {
+    "composer.json": true,
+    "railway.json": true,
+    "nixpacks.toml": true
+  },
+  "classes": {
+    "app_classes": 42,
+    "missing_explicit_app_imports": []
+  },
+  "views": {
+    "literal_references": 10,
+    "missing": []
+  },
+  "routes": {
+    "defined_candidates": 49,
+    "literal_references": 31,
+    "missing": []
+  },
+  "modules": {
+    "Auth": true,
+    "Admin Phase 1": true,
+    "Paper/Notes Upload": true,
+    "Gallery": true,
+    "Compression": true,
+    "Contact": true
+  },
+  "subject_master": {
+    "rows": 141,
+    "unique_identities": 141,
+    "branches": {
+      "CS": 36,
+      "ME": 37,
+      "EE": 35,
+      "ET": 33
+    },
+    "reference_workbook_sha256": "15c5a11bd8e7d725bf38ef8a8e885bb49467edcdfa6dad206769c920b1f629af",
+    "source_workbook_sha256": "15c5a11bd8e7d725bf38ef8a8e885bb49467edcdfa6dad206769c920b1f629af",
+    "workbook_exact_match": true
+  },
+  "quality": {
+    "zero_byte_files": [],
+    "base64_files": [],
+    "stale_500mb_files": [],
+    "executable_placeholder_files": [],
+    "hardcoded_secret_pattern_files": [],
+    "oversized_text_files": []
+  },
+  "deployment": {
+    "procfile_uses_port": true,
+    "nixpacks_uses_port": true,
+    "railway_uses_port": true,
+    "mysql_mapping_documented": true,
+    "required_env_missing": [],
+    "old_setup_scripts_absent": true,
+    "fake_composer_lock_absent": true,
+    "php_ini_upload_205M": true,
+    "php_ini_post_220M": true
+  },
+  "dependencies": {
+    "laravel/framework": "^12.0",
+    "intervention/image": "^3.11",
+    "ilovepdf/ilovepdf-php": "^1.4"
+  },
+  "runtime_limitations": {
+    "composer_available": false,
+    "php_extensions_present": []
+  }
+}

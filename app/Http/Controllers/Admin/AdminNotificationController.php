@@ -1,0 +1,4 @@
+<?php
+namespace App\Http\Controllers\Admin;
+use App\Http\Controllers\Controller; use App\Models\PortalNotification; use App\Services\AdminActivityService; use Illuminate\Http\Request;
+class AdminNotificationController extends Controller {public function index(){return view('admin.notifications.index',['notifications'=>PortalNotification::latest()->paginate(30)]);}public function store(Request $r,AdminActivityService $log){$v=$r->validate(['audience'=>'required|in:all,students,faculty,single','recipient'=>'nullable|string|max:190','title'=>'required|string|max:120','message'=>'required|string|max:1000','link'=>'nullable|string|max:500']);$n=PortalNotification::create($v+['admin_id'=>$r->user()->id]);$log->log('notification_created','notification',$n->id);return back()->with('status','Notification saved.');}}

@@ -1,0 +1,4 @@
+<?php
+namespace App\Http\Controllers\Admin;
+use App\Http\Controllers\Controller; use App\Services\AdminActivityService; use Illuminate\Http\Request; use Illuminate\Support\Facades\Hash;
+class AdminAccountController extends Controller {public function edit(){return view('admin.account.edit');}public function update(Request $r,AdminActivityService $log){$v=$r->validate(['current_password'=>'required|current_password','admin_identifier'=>'required|string|max:100|unique:users,admin_identifier,'.$r->user()->id,'email'=>'required|email|max:190|unique:users,email,'.$r->user()->id,'password'=>'nullable|string|min:12|confirmed']);$u=$r->user();$u->admin_identifier=$v['admin_identifier'];$u->email=$v['email'];if(!empty($v['password']))$u->password=Hash::make($v['password']);$u->save();$log->log('admin_account_updated','user',$u->id);return back()->with('status','Admin account updated.');}}

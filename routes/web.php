@@ -1,315 +1,307 @@
- /*
+ <?php
+
+use App\Http\Controllers\{
+    PortalController,
+    PaperController,
+    NoteController,
+    GalleryController,
+    ContactController,
+    UploadMetadataLookupController
+};
+
+use App\Http\Controllers\Auth\{
+    PortalAuthController,
+    ForgotPasswordController,
+    ResetPasswordController
+};
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
+/*
 |--------------------------------------------------------------------------
-| TEMPORARY GPCS SESSION / CSRF TEST
+| Public portal
 |--------------------------------------------------------------------------
-| 419 error diagnose karne ke liye temporary routes.
-| Test complete hone ke baad is poore block ko remove kar dena.
 */
 
-\Illuminate\Support\Facades\Route::get(
-    '/__gpcs/session-test',
-    function (\Illuminate\Http\Request $request) {
+Route::get('/', [PortalController::class, 'index'])
+    ->name('portal.home');
 
-        $session = $request->session();
+/*
+|--------------------------------------------------------------------------
+| Student / Faculty authentication
+|--------------------------------------------------------------------------
+*/
 
-        /*
-         * Session mein ek temporary value save karte hain.
-         */
-        if (! $session->has('gpcs_test_created')) {
-            $session->put(
-                'gpcs_test_created',
-                now()->toIso8601String()
-            );
-        }
+Route::post('/login', [PortalAuthController::class, 'login'])
+    ->middleware('throttle:10,1')
+    ->name('portal.login');
 
-        $session->put(
-            'gpcs_test_last_seen',
-            now()->toIso8601String()
-        );
+Route::post('/register', [PortalAuthController::class, 'register'])
+    ->middleware('throttle:5,1')
+    ->name('portal.register');
 
-        $session->save();
+Route::post('/logout', [PortalAuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('portal.logout');
 
-        /*
-         * Database / sessions table ko safely check karo.
-         * Kisi password ya DB error ko browser par expose nahi karenge.
-         */
-        $dbOk = false;
-        $sessionsTableOk = false;
-        $sessionRowOk = false;
+Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])
+    ->middleware('guest')
+    ->name('password.email');
 
-        try {
-            $connection = config('session.connection')
-                ?: config('database.default');
+Route::get('/reset-password/{token}', [ResetPasswordController::class, 'form'])
+    ->middleware('guest')
+    ->name('password.reset');
 
-            $table = config('session.table', 'sessions');
+Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
+    ->middleware('guest')
+    ->name('password.update');
 
-            \Illuminate\Support\Facades\DB::connection(
-                $connection
-            )->getPdo();
+/*
+|--------------------------------------------------------------------------
+| Public APIs / lookup
+|--------------------------------------------------------------------------
+*/
 
-            $dbOk = true;
+Route::get('/api/papers', [PaperController::class, 'index'])
+    ->name('papers.index');
 
-            $sessionsTableOk =
-                \Illuminate\Support\Facades\Schema::connection(
-                    $connection
-                )->hasTable($table);
+Route::get('/api/notes', [NoteController::class, 'index'])
+    ->name('notes.index');
 
-            if ($sessionsTableOk) {
-                $sessionRowOk =
-                    \Illuminate\Support\Facades\DB::connection(
-                        $connection
-                    )
-                    ->table($table)
-                    ->where(
-                        'id',
-                        $session->getId()
-                    )
-                    ->exists();
-            }
+Route::get('/api/gallery', [GalleryController::class, 'index'])
+    ->name('gallery.index');
 
-        } catch (\Throwable $e) {
-            /*
-             * Intentionally empty.
-             * Real database error public page par nahi dikhana.
-             */
-        }
+Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('contact.store');
 
-        $cookieName = config(
-            'session.cookie',
-            'gpcs_portal_session'
-        );
+Route::get(
+    '/metadata/papers',
+    [UploadMetadataLookupController::class, 'paper']
+)->name('metadata.papers.lookup');
 
-        $csrfToken = csrf_token();
+Route::get(
+    '/metadata/notes',
+    [UploadMetadataLookupController::class, 'note']
+)->name('metadata.notes.lookup');
 
-        $status = [
-            'HTTPS detected' =>
-                $request->isSecure()
-                    ? 'YES'
-                    : 'NO',
+/*
+|--------------------------------------------------------------------------
+| Authenticated student/faculty actions
+|--------------------------------------------------------------------------
+*/
 
-            'Scheme' =>
-                $request->getScheme(),
+Route::middleware(['auth', 'account.active'])->group(function (): void {
 
-            'Session driver' =>
-                (string) config('session.driver'),
+    Route::post('/papers', [PaperController::class, 'store'])
+        ->name('papers.store');
 
-            'Session connection' =>
-                (string) (
-                    config('session.connection')
-                    ?: config('database.default')
-                ),
+    Route::post('/notes', [NoteController::class, 'store'])
+        ->name('notes.store');
 
-            'Session table' =>
-                (string) config(
-                    'session.table',
-                    'sessions'
-                ),
+    Route::post('/gallery', [GalleryController::class, 'store'])
+        ->name('gallery.store');
 
-            'Cookie name' =>
-                (string) $cookieName,
+    Route::get(
+        '/papers/{paper}/download',
+        [PaperController::class, 'download']
+    )->name('papers.download');
 
-            'Cookie received' =>
-                $request->hasCookie($cookieName)
-                    ? 'YES'
-                    : 'NO',
+    Route::get(
+        '/notes/{note}/download',
+        [NoteController::class, 'download']
+    )->name('notes.download');
 
-            'Session ID exists' =>
-                ! empty($session->getId())
-                    ? 'YES'
-                    : 'NO',
+    Route::get(
+        '/gallery/{image}',
+        [GalleryController::class, 'show']
+    )->name('gallery.show');
+});
 
-            'CSRF token exists' =>
-                strlen((string) $csrfToken) > 20
-                    ? 'YES'
-                    : 'NO',
+/*
+|--------------------------------------------------------------------------
+| TEMPORARY SESSION / CSRF DIAGNOSTIC
+|--------------------------------------------------------------------------
+|
+| Railway 419 issue diagnose karne ke liye temporary routes.
+| Ye passwords, APP_KEY, DB password ya CSRF token values expose nahi karte.
+|
+*/
 
-            'Database connection' =>
-                $dbOk
-                    ? 'OK'
-                    : 'FAILED',
+Route::get('/__gpcs/session-test', function (Request $request) {
 
-            'Sessions table' =>
-                $sessionsTableOk
-                    ? 'FOUND'
-                    : 'NOT FOUND',
+    $session = $request->session();
 
-            'Current session DB row' =>
-                $sessionRowOk
-                    ? 'FOUND'
-                    : 'NOT FOUND',
+    $session->put(
+        'gpcs_session_probe',
+        now()->toIso8601String()
+    );
 
-            'Secure cookie' =>
-                config('session.secure')
-                    ? 'TRUE'
-                    : 'FALSE',
+    $session->save();
 
-            'Session domain' =>
-                config('session.domain')
-                    ?: 'NULL / NOT SET',
+    return response()->json([
 
-            'SameSite' =>
-                (string) config(
-                    'session.same_site',
-                    'lax'
-                ),
-        ];
+        'https' =>
+            $request->isSecure(),
 
-        $rows = '';
+        'scheme' =>
+            $request->getScheme(),
 
-        foreach ($status as $label => $value) {
-            $safeLabel = e($label);
-            $safeValue = e($value);
+        'session_driver' =>
+            config('session.driver'),
 
-            $rows .= "
-                <tr>
-                    <td>{$safeLabel}</td>
-                    <td><strong>{$safeValue}</strong></td>
-                </tr>
-            ";
-        }
+        'session_connection' =>
+            config('session.connection')
+            ?: config('database.default'),
 
-        $safeToken = e($csrfToken);
+        'session_table' =>
+            config('session.table', 'sessions'),
 
-        return response(
-            <<<HTML
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
+        'session_cookie' =>
+            config('session.cookie'),
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-    >
+        'cookie_received' =>
+            $request->hasCookie(
+                (string) config('session.cookie')
+            ),
 
-    <title>GPCS Session Test</title>
+        'session_id_present' =>
+            ! empty($session->getId()),
 
-    <style>
-        body {
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
+        'csrf_token_present' =>
+            ! empty(csrf_token()),
 
-            background: #f4f7fb;
-            color: #172b4d;
-            margin: 0;
-            padding: 24px;
-        }
+        'secure_cookie' =>
+            (bool) config('session.secure'),
 
-        .box {
-            max-width: 760px;
-            margin: 20px auto;
-            background: white;
-            border-radius: 18px;
-            padding: 24px;
-            box-shadow:
-                0 10px 35px
-                rgba(0, 0, 0, .08);
-        }
+        'session_domain' =>
+            config('session.domain'),
 
-        h1 {
-            margin-top: 0;
-            color: #0a4a9c;
-        }
+        'same_site' =>
+            config('session.same_site'),
+    ]);
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
+})->name('gpcs.session.test');
 
-        td {
-            padding: 11px;
-            border-bottom:
-                1px solid #e5ebf3;
-        }
 
-        td:first-child {
-            width: 55%;
-        }
+Route::get('/__gpcs/csrf-test', function () {
 
-        button {
-            border: 0;
-            border-radius: 10px;
-            padding: 13px 20px;
-            background: #0a66d8;
-            color: white;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+    $action = e(
+        url('/__gpcs/csrf-test')
+    );
 
-        .note {
-            background: #eef6ff;
-            border-radius: 10px;
-            padding: 12px;
-        }
-    </style>
-</head>
+    $token = e(
+        csrf_token()
+    );
 
-<body>
+    return response(
 
-<div class="box">
+        '<!doctype html>' .
 
-    <h1>GPCS Portal Session Test</h1>
+        '<html lang="en">' .
 
-    <p class="note">
-        Page ko ek baar refresh karo.
-        Uske baad neeche
-        <strong>Test CSRF</strong>
-        button dabao.
-    </p>
+        '<head>' .
 
-    <table>
-        {$rows}
-    </table>
+        '<meta charset="utf-8">' .
 
-    <form
-        method="POST"
-        action="/__gpcs/session-test"
-    >
+        '<meta name="viewport" content="width=device-width, initial-scale=1">' .
 
-        <input
+        '<title>GPCS CSRF Test</title>' .
+
+        '</head>' .
+
+        '<body style="
+            font-family:Arial,sans-serif;
+            background:#f4f7fb;
+            padding:30px
+        ">' .
+
+        '<div style="
+            max-width:620px;
+            margin:40px auto;
+            background:#fff;
+            padding:24px;
+            border-radius:16px
+        ">' .
+
+        '<h2>GPCS Portal CSRF Test</h2>' .
+
+        '<p>
+            Button dabao.
+            Agar JSON me PASS aaye to
+            Laravel CSRF/session sahi hai.
+        </p>' .
+
+        '<form
+            method="POST"
+            action="' . $action . '"
+        >' .
+
+        '<input
             type="hidden"
             name="_token"
-            value="{$safeToken}"
+            value="' . $token . '"
+        >' .
+
+        '<button
+            type="submit"
+            style="
+                padding:12px 20px;
+                border:0;
+                border-radius:10px;
+                background:#0a66d8;
+                color:#fff;
+                font-weight:700;
+                cursor:pointer
+            "
         >
-
-        <button type="submit">
             Test CSRF
-        </button>
+        </button>' .
 
-    </form>
+        '</form>' .
 
-</div>
+        '</div>' .
 
-</body>
-</html>
-HTML
-        );
-    }
-);
+        '</body>' .
+
+        '</html>'
+    );
+
+})->name('gpcs.csrf.test.form');
 
 
-\Illuminate\Support\Facades\Route::post(
-    '/__gpcs/session-test',
-    function (\Illuminate\Http\Request $request) {
+Route::post('/__gpcs/csrf-test', function (Request $request) {
 
-        return response()->json([
-            'result' => 'PASS',
+    return response()->json([
 
-            'message' =>
-                'Laravel session and CSRF are working correctly.',
+        'result' =>
+            'PASS',
 
-            'session_driver' =>
-                config('session.driver'),
+        'message' =>
+            'Laravel session and CSRF validation are working correctly.',
 
-            'session_cookie' =>
-                config('session.cookie'),
+        'https' =>
+            $request->isSecure(),
 
-            'https' =>
-                $request->isSecure(),
-        ]);
-    }
-);
+        'session_driver' =>
+            config('session.driver'),
+
+        'session_cookie' =>
+            config('session.cookie'),
+
+        'session_id_present' =>
+            ! empty(
+                $request->session()->getId()
+            ),
+    ]);
+
+})->name('gpcs.csrf.test.submit');
+
+/*
+|--------------------------------------------------------------------------
+| Admin routes
+|--------------------------------------------------------------------------
+*/
+
+require __DIR__ . '/admin.php';

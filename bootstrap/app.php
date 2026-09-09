@@ -1,4 +1,5 @@
 <?php
+
 use App\Http\Middleware\AdminIdleTimeout;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsurePortalAccountActive;
@@ -14,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.idle' => AdminIdleTimeout::class,
             'account.active' => EnsurePortalAccountActive::class,
         ]);
+        $middleware->redirectGuestsTo(fn () => route('portal.home'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Laravel's default exception rendering is appropriate for production when APP_DEBUG=false.

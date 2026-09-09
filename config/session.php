@@ -1,2 +1,148 @@
-<?php
-return ['driver'=>env('SESSION_DRIVER','database'),'lifetime'=>(int)env('SESSION_LIFETIME',120),'expire_on_close'=>false,'encrypt'=>false,'files'=>storage_path('framework/sessions'),'connection'=>env('SESSION_CONNECTION'),'table'=>env('SESSION_TABLE','sessions'),'store'=>env('SESSION_STORE'),'lottery'=>[2,100],'cookie'=>env('SESSION_COOKIE','gpcs_session'),'path'=>'/','domain'=>env('SESSION_DOMAIN'),'secure'=>env('SESSION_SECURE_COOKIE'),'http_only'=>true,'same_site'=>'lax','partitioned'=>false];
+ <?php
+
+use Illuminate\Support\Str;
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Session Driver
+    |--------------------------------------------------------------------------
+    |
+    | Railway production uses the database session driver.
+    |
+    */
+
+    'driver' => env('SESSION_DRIVER', 'database'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Lifetime
+    |--------------------------------------------------------------------------
+    */
+
+    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+
+    'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Encryption
+    |--------------------------------------------------------------------------
+    */
+
+    'encrypt' => env('SESSION_ENCRYPT', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session File Location
+    |--------------------------------------------------------------------------
+    |
+    | Only used when SESSION_DRIVER=file.
+    |
+    */
+
+    'files' => storage_path('framework/sessions'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Connection
+    |--------------------------------------------------------------------------
+    */
+
+    'connection' => env('SESSION_CONNECTION'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Session Table
+    |--------------------------------------------------------------------------
+    */
+
+    'table' => env('SESSION_TABLE', 'sessions'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache Store
+    |--------------------------------------------------------------------------
+    */
+
+    'store' => env('SESSION_STORE'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Sweeping Lottery
+    |--------------------------------------------------------------------------
+    */
+
+    'lottery' => [2, 100],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Cookie Name
+    |--------------------------------------------------------------------------
+    |
+    | Use a stable cookie name instead of relying on APP_NAME.
+    |
+    */
+
+    'cookie' => env(
+        'SESSION_COOKIE',
+        'gpcs_portal_session'
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Cookie Path
+    |--------------------------------------------------------------------------
+    */
+
+    'path' => env('SESSION_PATH', '/'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Cookie Domain
+    |--------------------------------------------------------------------------
+    |
+    | Leave SESSION_DOMAIN unset on Railway unless you specifically need
+    | cookies shared between subdomains.
+    |
+    */
+
+    'domain' => env('SESSION_DOMAIN'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTTPS-Only Cookies
+    |--------------------------------------------------------------------------
+    |
+    | Railway public applications use HTTPS.
+    |
+    */
+
+    'secure' => env('SESSION_SECURE_COOKIE', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTTP Access Only
+    |--------------------------------------------------------------------------
+    */
+
+    'http_only' => env('SESSION_HTTP_ONLY', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Same-Site Cookies
+    |--------------------------------------------------------------------------
+    */
+
+    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Partitioned Cookies
+    |--------------------------------------------------------------------------
+    */
+
+    'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
+
+];

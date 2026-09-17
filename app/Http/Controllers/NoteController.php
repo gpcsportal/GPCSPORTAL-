@@ -7,8 +7,11 @@ use App\Models\Note;
 use App\Services\FileCompressionService;
 use App\Services\PdfCompressionService;
 use App\Services\UploadMetadataService;
+use App\Services\UploadStorageService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Throwable;
 
 class NoteController extends Controller
@@ -44,25 +47,40 @@ class NoteController extends Controller
         StoreNoteUploadRequest $request,
         UploadMetadataService $metadata,
         FileCompressionService $images,
-        PdfCompressionService $pdf
+        PdfCompressionService $pdf,
+        UploadStorageService $storageCapacity
     ) {
         $data = $request->safe()->except('attachment');
         $data['semester'] = $metadata->normalizeSemester($data['semester']);
-        $fingerprint = $metadata->fingerprintNote($data);
 
-        if (Note::where('fingerprint', $fingerprint)->exists()) {
+        $file = $request->file('attachment');
+
+        if ($file && ! $file->isValid()) {
             return response()->json([
-                'message' => 'This exact Notes academic record already exists.',
+                'message' => 'The Notes attachment could not be read. Please choose the file again.',
             ], 422);
         }
 
-        $file = $request->file('attachment');
         $fileHash = $file ? hash_file('sha256', $file->getRealPath()) : null;
 
         if ($fileHash && Note::where('file_hash', $fileHash)->exists()) {
             return response()->json([
                 'message' => 'This exact Notes file has already been uploaded.',
             ], 422);
+        }
+
+        $fingerprint = $metadata->fingerprintNote($data, $fileHash ?: null);
+
+        if (Note::where('fingerprint', $fingerprint)->exists()) {
+            return response()->json([
+                'message' => 'This exact Notes submission already exists.',
+            ], 422);
+        }
+
+        if ($file && ! $storageCapacity->hasCapacityFor((int) $file->getSize())) {
+            return response()->json([
+                'message' => 'Upload storage is nearly full. Please contact the Admin before uploading this Notes file.',
+            ], 507);
         }
 
         $path = null;
@@ -73,10 +91,29 @@ class NoteController extends Controller
             $size = 0;
 
             if ($file) {
-                $path = $file->store('notes', 'public');
+                $storedPath = $file->store('notes', 'public');
+
+                if (! is_string($storedPath) || $storedPath === '') {
+                    return response()->json([
+                        'message' => 'Notes file could not be saved to portal storage. Please try again later.',
+                    ], 507);
+                }
+
+                $path = $storedPath;
+                $disk = Storage::disk('public');
+
+                if (! $disk->exists($path)) {
+                    throw new RuntimeException('Stored Notes file is missing from the public disk.');
+                }
+
+                $absolutePath = $disk->path($path);
+
+                if (! is_file($absolutePath)) {
+                    throw new RuntimeException('Stored Notes path is not a readable file.');
+                }
+
                 $name = $file->getClientOriginalName();
                 $mime = $file->getMimeType() ?: 'application/octet-stream';
-                $absolutePath = storage_path('app/public/'.$path);
 
                 if ($mime === 'application/pdf') {
                     $pdf->compressInPlace($absolutePath);
@@ -84,7 +121,14 @@ class NoteController extends Controller
                     $images->compressImageInPlace($absolutePath);
                 }
 
-                $size = filesize($absolutePath) ?: $file->getSize();
+                clearstatcache(true, $absolutePath);
+                $finalSize = filesize($absolutePath);
+
+                if ($finalSize === false || $finalSize <= 0) {
+                    throw new RuntimeException('Stored Notes file is empty after processing.');
+                }
+
+                $size = $finalSize;
             }
 
             $note = Note::create(array_merge($data, [
@@ -102,11 +146,22 @@ class NoteController extends Controller
                 'message' => 'Notes submitted for Admin approval.',
                 'id' => $note->id,
             ], 201);
-        } catch (Throwable $exception) {
-            if ($path) {
-                Storage::disk('public')->delete($path);
+        } catch (QueryException $exception) {
+            $this->deleteStoredFile($path);
+
+            if ($this->isUniqueConstraintViolation($exception)) {
+                return response()->json([
+                    'message' => 'This Notes submission was already uploaded. Duplicate upload was blocked.',
+                ], 422);
             }
 
+            report($exception);
+
+            return response()->json([
+                'message' => 'Notes upload could not be completed. Please try again.',
+            ], 500);
+        } catch (Throwable $exception) {
+            $this->deleteStoredFile($path);
             report($exception);
 
             return response()->json([
@@ -124,5 +179,20 @@ class NoteController extends Controller
             $note->attachment_path,
             $note->original_name ?: 'notes-file'
         );
+    }
+
+    private function deleteStoredFile(?string $path): void
+    {
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    private function isUniqueConstraintViolation(QueryException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return in_array((string) $exception->getCode(), ['23000', '23505'], true)
+            && (str_contains($message, 'duplicate') || str_contains($message, 'unique'));
     }
 }

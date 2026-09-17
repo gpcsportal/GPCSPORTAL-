@@ -3,13 +3,53 @@
   const routes = cfg.routes || {};
   const csrf = cfg.csrf || '';
   const toast = (message) => { if (typeof window.toast === 'function') window.toast(message); else alert(message); };
+
+  const normalizeRequestUrl = (value) => {
+    if (!value) return value;
+    try {
+      const parsed = new URL(value, window.location.origin);
+      if (parsed.host === window.location.host) {
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+      return parsed.toString();
+    } catch (_) {
+      return value;
+    }
+  };
+
   const request = async (url, options = {}) => {
-    const headers = new Headers(options.headers || {}); headers.set('X-CSRF-TOKEN', csrf); headers.set('Accept','application/json');
-    const res = await fetch(url, {...options, headers});
-    let body = {}; try { body = await res.json(); } catch (_) {}
-    if (!res.ok) { const errors = body.errors ? Object.values(body.errors).flat().join(' ') : body.message; throw new Error(errors || 'Request failed.'); }
+    const headers = new Headers(options.headers || {});
+    headers.set('X-CSRF-TOKEN', csrf);
+    headers.set('Accept', 'application/json');
+
+    let res;
+    try {
+      res = await fetch(normalizeRequestUrl(url), {
+        ...options,
+        headers,
+        credentials: options.credentials || 'same-origin',
+      });
+    } catch (_) {
+      throw new Error('Unable to reach the secure portal server. Please try again.');
+    }
+
+    let body = {};
+    try { body = await res.json(); } catch (_) {}
+
+    if (!res.ok) {
+      if (res.status === 419) {
+        throw new Error('Your secure session expired. Refresh the page and try again.');
+      }
+      const errors = body.errors ? Object.values(body.errors).flat().join(' ') : body.message;
+      throw new Error(errors || 'Request failed.');
+    }
     return body;
   };
+
+  // Keep the hidden Admin form same-origin even if a stale APP_URL ever reaches a cached Blade view.
+  const adminForm = document.getElementById('gpcsHiddenAdminForm');
+  if (adminForm) adminForm.setAttribute('action', '/admin/hidden-login');
+
   const inputs = (form, selector='input,select,textarea') => [...form.querySelectorAll(selector)].filter(x => !x.disabled);
   const valueByLabel = (form, labelText) => {
     const label = [...form.querySelectorAll('label')].find(l => l.textContent.trim().toLowerCase().startsWith(labelText.toLowerCase()));
@@ -84,11 +124,18 @@
         const body=await request(routes.register,{method:'POST',body:fd});toast(body.message);location.href='/';return;
       }
       if (id === 'previewUploadForm') {
-        const fd=new FormData(); const f=fileByLabel(form,'Choose Paper File'); if(!f)throw new Error('Choose a Paper file.'); fd.set('file',f);
+        const fd=new FormData(); const f=fileByLabel(form,'Choose Paper File'); if(!f)throw new Error('Choose a Paper file.');
+        if(f.size > 100 * 1024 * 1024) throw new Error('Paper file must be 100 MB or smaller.');
+        fd.set('file',f);
         for(const [label,key] of [['Paper Code','paper_code'],['Subject Code','subject_code'],['Paper Name','paper_name'],['Subject Name','subject_name'],['Branch','branch'],['Semester','semester'],['Year','year'],['Session','session']]){const v=valueByLabel(form,label);if(v)fd.set(key,v);}
         const body=await request(routes.paperStore,{method:'POST',body:fd});toast(body.message);form.reset();return;
       }
-      if (id === 'previewNoteForm') { const fd=new FormData(form); const body=await request(routes.noteStore,{method:'POST',body:fd});toast(body.message);form.reset();return; }
+      if (id === 'previewNoteForm') {
+        const fd=new FormData(form);
+        const attachment=form.querySelector('input[type="file"]')?.files?.[0];
+        if(attachment && attachment.size > 200 * 1024 * 1024) throw new Error('Notes file must be 200 MB or smaller.');
+        const body=await request(routes.noteStore,{method:'POST',body:fd});toast(body.message);form.reset();return;
+      }
       if (id === 'previewContactForm') { const els=inputs(form); const body=await submitJson(routes.contactStore,{name:els[0]?.value||'',contact:els[1]?.value||'',message:els[2]?.value||''});toast(body.message);form.reset();return; }
       if (id === 'previewResetForm') { const email=form.querySelector('input[name="email"]')?.value?.trim() || valueByLabel(form,'Email ID'); if(!email.includes('@'))throw new Error('Enter the registered Email ID.'); const body=await submitJson(routes.forgot,{email});toast(body.message);return; }
     } catch (e) { toast(e.message || 'Unable to complete the request.'); }

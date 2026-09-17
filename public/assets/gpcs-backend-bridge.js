@@ -4,6 +4,14 @@
   const csrf = cfg.csrf || '';
   const toast = (message) => { if (typeof window.toast === 'function') window.toast(message); else alert(message); };
 
+  if (!document.querySelector('link[data-gpcs-audit-fixes]')) {
+    const stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = '/assets/gpcs-audit-fixes.css';
+    stylesheet.dataset.gpcsAuditFixes = '1';
+    document.head.appendChild(stylesheet);
+  }
+
   const normalizeRequestUrl = (value) => {
     if (!value) return value;
     try {
@@ -22,15 +30,24 @@
     headers.set('X-CSRF-TOKEN', csrf);
     headers.set('Accept', 'application/json');
 
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || 30000);
+
     let res;
     try {
       res = await fetch(normalizeRequestUrl(url), {
         ...options,
         headers,
         credentials: options.credentials || 'same-origin',
+        signal: options.signal || controller.signal,
       });
-    } catch (_) {
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw new Error('The portal request timed out. Please check your connection and try again.');
+      }
       throw new Error('Unable to reach the secure portal server. Please try again.');
+    } finally {
+      window.clearTimeout(timeout);
     }
 
     let body = {};
@@ -40,13 +57,15 @@
       if (res.status === 419) {
         throw new Error('Your secure session expired. Refresh the page and try again.');
       }
+      if (res.status === 429) {
+        throw new Error('Too many requests. Please wait a moment and try again.');
+      }
       const errors = body.errors ? Object.values(body.errors).flat().join(' ') : body.message;
       throw new Error(errors || 'Request failed.');
     }
     return body;
   };
 
-  // Keep the hidden Admin form same-origin even if a stale APP_URL ever reaches a cached Blade view.
   const adminForm = document.getElementById('gpcsHiddenAdminForm');
   if (adminForm) adminForm.setAttribute('action', '/admin/hidden-login');
 
@@ -77,7 +96,7 @@
           for(const key of ['subject_code','subject_name','branch','semester']){const el=form.elements.namedItem(key);let v=el?.value?.trim()||'';if(key==='semester')v=v.replace(/^Semester\s+/i,'');if(v)params.set(key,v);}
         }
         if(!params.toString())return;
-        const data=await request((kind==='paper'?routes.paperLookup:routes.noteLookup)+'?'+params.toString());
+        const data=await request((kind==='paper'?routes.paperLookup:routes.noteLookup)+'?'+params.toString(), {timeoutMs:10000});
         if(!data?.unique)return;
         const u=data.unique;
         if(kind==='paper'){
@@ -105,10 +124,12 @@
     const id = form.id;
     if (!['previewStudentPassword','previewFacultyPassword','previewDynamicRegister','previewUploadForm','previewNoteForm','previewContactForm','previewResetForm'].includes(id)) return;
     event.preventDefault(); event.stopImmediatePropagation();
+    const submitter = event.submitter;
+    if (submitter instanceof HTMLButtonElement) submitter.disabled = true;
     try {
       if (id === 'previewStudentPassword' || id === 'previewFacultyPassword') {
         const els = inputs(form,'input'); const email=els.find(x=>x.type==='email')?.value||''; const password=els.find(x=>x.type==='password')?.value||'';
-        const body=await submitJson(routes.login,{email,password,role:id.includes('Faculty')?'faculty':'student'}); toast(body.message); location.href='/'; return;
+        const body=await submitJson(routes.login,{email,password,role:id.includes('Faculty')?'faculty':'student'}); toast(body.message); location.href=body.redirect||'/'; return;
       }
       if (id === 'previewDynamicRegister') {
         const role = form.querySelector('[data-faculty-fields]')?.hidden === false ? 'faculty' : 'student';
@@ -121,28 +142,51 @@
         const outer=[...form.querySelectorAll(':scope > label input, :scope > label textarea')];
         const mobile=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===10);const email=outer.find(x=>x.type==='email');const passes=outer.filter(x=>x.type==='password');const pin=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===6);const address=outer.find(x=>x.tagName==='TEXTAREA');const photo=outer.find(x=>x.type==='file');
         if(mobile?.value)fd.set('mobile',mobile.value);fd.set('email',email?.value||'');fd.set('password',passes[0]?.value||'');fd.set('password_confirmation',passes[1]?.value||'');if(pin?.value)fd.set('pin_code',pin.value);fd.set('address',address?.value||'');if(photo?.files?.[0])fd.set('profile_photo',photo.files[0]);
-        const body=await request(routes.register,{method:'POST',body:fd});toast(body.message);location.href='/';return;
+        const body=await request(routes.register,{method:'POST',body:fd,timeoutMs:45000});toast(body.message);location.href=body.redirect||'/';return;
       }
       if (id === 'previewUploadForm') {
         const fd=new FormData(); const f=fileByLabel(form,'Choose Paper File'); if(!f)throw new Error('Choose a Paper file.');
         if(f.size > 100 * 1024 * 1024) throw new Error('Paper file must be 100 MB or smaller.');
         fd.set('file',f);
         for(const [label,key] of [['Paper Code','paper_code'],['Subject Code','subject_code'],['Paper Name','paper_name'],['Subject Name','subject_name'],['Branch','branch'],['Semester','semester'],['Year','year'],['Session','session']]){const v=valueByLabel(form,label);if(v)fd.set(key,v);}
-        const body=await request(routes.paperStore,{method:'POST',body:fd});toast(body.message);form.reset();return;
+        const body=await request(routes.paperStore,{method:'POST',body:fd,timeoutMs:180000});toast(body.message);form.reset();return;
       }
       if (id === 'previewNoteForm') {
         const fd=new FormData(form);
         const attachment=form.querySelector('input[type="file"]')?.files?.[0];
         if(attachment && attachment.size > 200 * 1024 * 1024) throw new Error('Notes file must be 200 MB or smaller.');
-        const body=await request(routes.noteStore,{method:'POST',body:fd});toast(body.message);form.reset();return;
+        const body=await request(routes.noteStore,{method:'POST',body:fd,timeoutMs:180000});toast(body.message);form.reset();return;
       }
       if (id === 'previewContactForm') { const els=inputs(form); const body=await submitJson(routes.contactStore,{name:els[0]?.value||'',contact:els[1]?.value||'',message:els[2]?.value||''});toast(body.message);form.reset();return; }
       if (id === 'previewResetForm') { const email=form.querySelector('input[name="email"]')?.value?.trim() || valueByLabel(form,'Email ID'); if(!email.includes('@'))throw new Error('Enter the registered Email ID.'); const body=await submitJson(routes.forgot,{email});toast(body.message);return; }
     } catch (e) { toast(e.message || 'Unable to complete the request.'); }
+    finally { if (submitter instanceof HTMLButtonElement) submitter.disabled = false; }
   }, true);
 
-
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const safeHref = (value) => {
+    if (!value) return null;
+    try {
+      const url = new URL(value, window.location.origin);
+      if (url.origin === window.location.origin) return `${url.pathname}${url.search}${url.hash}`;
+      return url.protocol === 'https:' ? url.toString() : null;
+    } catch (_) { return null; }
+  };
+
+  const loadDigitalBoard = async () => {
+    const main=document.querySelector('main');
+    if(!main || document.getElementById('gpcsDigitalBoard'))return;
+    const board=document.createElement('section');
+    board.id='gpcsDigitalBoard';board.className='gpcs-digital-board';board.setAttribute('aria-live','polite');
+    board.innerHTML='<div class="gpcs-digital-board-head"><h2>Digital Board</h2><span>Latest college notices</span></div><div class="gpcs-digital-board-list"><div class="gpcs-digital-board-empty">Loading notices…</div></div>';
+    main.prepend(board);
+    const list=board.querySelector('.gpcs-digital-board-list');
+    try{
+      const rows=await request('/api/notifications',{timeoutMs:12000});
+      list.innerHTML=rows.length?rows.map(n=>{const href=safeHref(n.link);const tag=href?'a':'div';const attrs=href?` href="${escapeHtml(href)}"${href.startsWith('https://')?' target="_blank" rel="noopener noreferrer"':''}`:'';const date=n.published_at?new Date(n.published_at).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'}):'';return `<${tag} class="gpcs-digital-board-card"${attrs}><strong>${escapeHtml(n.title||'Notice')}</strong><p>${escapeHtml(n.message||'')}</p>${date?`<time>${escapeHtml(date)}</time>`:''}</${tag}>`;}).join(''):'<div class="gpcs-digital-board-empty">No notices are available right now.</div>';
+    }catch(_){list.innerHTML='<div class="gpcs-digital-board-empty">Notices are temporarily unavailable. Please try again later.</div>';}
+  };
+
   const loadLibraries = async () => {
     const paperRows=document.getElementById('previewPaperRows');
     if(paperRows && paperRows.dataset.liveLoaded!=='1'){
@@ -157,16 +201,20 @@
     const gallery=document.getElementById('previewGalleryLive');
     if(gallery && gallery.dataset.liveLoaded!=='1'){
       gallery.dataset.liveLoaded='1';
-      try{const rows=await request(routes.galleryApi);gallery.innerHTML=rows.length?rows.map(g=>`<a class="route-gallery-card" href="${escapeHtml(g.image_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(g.image_url)}" alt="${escapeHtml(g.caption||g.category||'College gallery image')}" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:10px"><b>${escapeHtml(g.caption||g.category||'College Image')}</b><small>${escapeHtml(g.category||'Gallery')}</small></a>`).join(''):'<div class="route-gallery-card"><b>No approved gallery images are available yet.</b></div>';}catch(e){gallery.innerHTML='<div class="route-gallery-card"><b>Unable to load gallery right now.</b></div>';}
+      try{const rows=await request(routes.galleryApi);gallery.innerHTML=rows.length?rows.map(g=>`<a class="route-gallery-card" href="${escapeHtml(g.image_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(g.image_url)}" alt="${escapeHtml(g.caption||g.category||'College gallery image')}" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:10px"><b>${escapeHtml(g.caption||g.category||'College Image')}</b><small>${escapeHtml(g.category||'Gallery')}</small></a>`).join(''):'<div class="route-gallery-card"><b>No approved gallery images are available yet.</b></div>';}catch(e){gallery.innerHTML='<div class="route-gallery-card"><div><b>Unable to load gallery right now.</b></div></div>';}
     }
   };
-  const observer=new MutationObserver(()=>loadLibraries()); observer.observe(document.documentElement,{childList:true,subtree:true}); document.addEventListener('DOMContentLoaded',loadLibraries); setTimeout(loadLibraries,0);
+
+  const observer=new MutationObserver(()=>loadLibraries());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',()=>{loadDigitalBoard();loadLibraries();});
+  setTimeout(()=>{loadDigitalBoard();loadLibraries();},0);
 
   document.addEventListener('change', async (event) => {
     if (event.target?.id !== 'previewGalleryInput') return;
     event.stopImmediatePropagation();
     const files=[...event.target.files]; if(!files.length)return;
-    for(const file of files){const fd=new FormData();fd.set('image',file);fd.set('category','Other College Related');try{const body=await request(routes.galleryStore,{method:'POST',body:fd});toast(body.message);}catch(e){toast(e.message);break;}}
+    for(const file of files){const fd=new FormData();fd.set('image',file);fd.set('category','Other College Related');try{const body=await request(routes.galleryStore,{method:'POST',body:fd,timeoutMs:120000});toast(body.message);}catch(e){toast(e.message);break;}}
     event.target.value='';
   }, true);
 })();

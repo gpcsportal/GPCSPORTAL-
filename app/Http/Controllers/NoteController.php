@@ -1,8 +1,105 @@
 <?php
+
 namespace App\Http\Controllers;
-use App\Http\Requests\StoreNoteUploadRequest; use App\Models\Note; use App\Services\FileCompressionService; use App\Services\PdfCompressionService; use App\Services\UploadMetadataService; use Illuminate\Http\Request; use Illuminate\Support\Facades\Storage;
-class NoteController extends Controller {
- public function index(Request $r){$q=Note::where('status','approved')->latest();if($s=trim((string)$r->query('q')))$q->where(fn($x)=>$x->where('title','like',"%$s%")->orWhere('subject_name','like',"%$s%")->orWhere('subject_code','like',"%$s%"));return response()->json($q->limit(100)->get()->map(fn(Note $n)=>['id'=>$n->id,'title'=>$n->title?:$n->subject_name,'subject_name'=>$n->subject_name,'subject_code'=>$n->subject_code,'branch'=>$n->branch,'semester'=>$n->semester,'year'=>$n->year,'download_url'=>$n->attachment_path?route('notes.download',$n):null]));}
- public function store(StoreNoteUploadRequest $r,UploadMetadataService $meta,FileCompressionService $images,PdfCompressionService $pdf){$data=$r->safe()->except('attachment');$data['semester']=$meta->normalizeSemester($data['semester']);$fp=$meta->fingerprintNote($data);if(Note::where('fingerprint',$fp)->exists())return response()->json(['message'=>'This exact Notes academic record already exists.'],422);$path=$name=$mime=null;$size=0;if($r->hasFile('attachment')){$f=$r->file('attachment');$path=$f->store('notes','public');$name=$f->getClientOriginalName();$mime=$f->getMimeType()?:'application/octet-stream';$abs=storage_path('app/public/'.$path);if($mime==='application/pdf')$pdf->compressInPlace($abs);elseif(str_starts_with($mime,'image/'))$images->compressImageInPlace($abs);$size=filesize($abs)?:$f->getSize();}$note=Note::create(array_merge($data,['user_id'=>$r->user()->id,'attachment_path'=>$path,'original_name'=>$name,'mime_type'=>$mime,'file_size'=>$size,'fingerprint'=>$fp,'status'=>'pending']));return response()->json(['message'=>'Notes submitted for Admin approval.','id'=>$note->id],201);}
- public function download(Note $note){abort_unless($note->status==='approved'&&$note->attachment_path,404);abort_unless(Storage::disk('public')->exists($note->attachment_path),404);return Storage::disk('public')->download($note->attachment_path,$note->original_name?:'notes-file');}
+
+use App\Http\Requests\StoreNoteUploadRequest;
+use App\Models\Note;
+use App\Services\FileCompressionService;
+use App\Services\PdfCompressionService;
+use App\Services\UploadMetadataService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class NoteController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = Note::where('status', 'approved')->latest();
+
+        if ($search = trim((string) $request->query('q'))) {
+            $query->where(fn ($item) => $item
+                ->where('title', 'like', "%{$search}%")
+                ->orWhere('subject_name', 'like', "%{$search}%")
+                ->orWhere('subject_code', 'like', "%{$search}%"));
+        }
+
+        return response()->json(
+            $query->limit(100)->get()->map(fn (Note $note) => [
+                'id' => $note->id,
+                'title' => $note->title ?: $note->subject_name,
+                'subject_name' => $note->subject_name,
+                'subject_code' => $note->subject_code,
+                'branch' => $note->branch,
+                'semester' => $note->semester,
+                'year' => $note->year,
+                'download_url' => $note->attachment_path
+                    ? route('notes.download', $note, false)
+                    : null,
+            ])
+        );
+    }
+
+    public function store(
+        StoreNoteUploadRequest $request,
+        UploadMetadataService $metadata,
+        FileCompressionService $images,
+        PdfCompressionService $pdf
+    ) {
+        $data = $request->safe()->except('attachment');
+        $data['semester'] = $metadata->normalizeSemester($data['semester']);
+        $fingerprint = $metadata->fingerprintNote($data);
+
+        if (Note::where('fingerprint', $fingerprint)->exists()) {
+            return response()->json([
+                'message' => 'This exact Notes academic record already exists.',
+            ], 422);
+        }
+
+        $path = null;
+        $name = null;
+        $mime = null;
+        $size = 0;
+
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $path = $file->store('notes', 'public');
+            $name = $file->getClientOriginalName();
+            $mime = $file->getMimeType() ?: 'application/octet-stream';
+            $absolutePath = storage_path('app/public/'.$path);
+
+            if ($mime === 'application/pdf') {
+                $pdf->compressInPlace($absolutePath);
+            } elseif (str_starts_with($mime, 'image/')) {
+                $images->compressImageInPlace($absolutePath);
+            }
+
+            $size = filesize($absolutePath) ?: $file->getSize();
+        }
+
+        $note = Note::create(array_merge($data, [
+            'user_id' => $request->user()->id,
+            'attachment_path' => $path,
+            'original_name' => $name,
+            'mime_type' => $mime,
+            'file_size' => $size,
+            'fingerprint' => $fingerprint,
+            'status' => 'pending',
+        ]));
+
+        return response()->json([
+            'message' => 'Notes submitted for Admin approval.',
+            'id' => $note->id,
+        ], 201);
+    }
+
+    public function download(Note $note)
+    {
+        abort_unless($note->status === 'approved' && $note->attachment_path, 404);
+        abort_unless(Storage::disk('public')->exists($note->attachment_path), 404);
+
+        return Storage::disk('public')->download(
+            $note->attachment_path,
+            $note->original_name ?: 'notes-file'
+        );
+    }
 }

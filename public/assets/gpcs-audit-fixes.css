@@ -11,26 +11,48 @@ table{max-width:100%}
 body{background-image:radial-gradient(circle at 8% 0%,rgba(59,130,246,.10),transparent 28rem),radial-gradient(circle at 92% 8%,rgba(34,211,238,.08),transparent 24rem),linear-gradient(180deg,#f9fbff 0,#f4f7fc 46%,#f7f9fd 100%)!important;background-attachment:scroll!important}
 [data-theme="dark"] body,body[data-theme="dark"]{background-image:radial-gradient(circle at 8% 0%,rgba(59,130,246,.13),transparent 28rem),radial-gradient(circle at 92% 8%,rgba(34,211,238,.07),transparent 24rem),linear-gradient(180deg,#050e1d 0,#06101f 48%,#07101e 100%)!important}
 
-.gpcs-digital-board{margin:18px auto 8px;width:min(calc(100% - 32px),1240px);background:linear-gradient(135deg,#081b3f,#0d2a5f 55%,#1d4ed8);color:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 18px 48px rgba(13,42,95,.16)}
-.gpcs-digital-board-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.gpcs-digital-board-head h2{margin:0;color:#fff;font-size:1.05rem}
-.gpcs-digital-board-head span{font-size:.76rem;opacity:.8}
-.gpcs-digital-board-list{display:grid;gap:10px}
-.gpcs-digital-board-card{display:block;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);border-radius:15px;padding:12px 14px;color:#fff;min-height:0;overflow-wrap:anywhere}
-.gpcs-digital-board-card:hover{background:rgba(255,255,255,.13)}
-.gpcs-digital-board-card strong{display:block;font-size:.96rem;margin-bottom:4px}
-.gpcs-digital-board-card p{margin:0;font-size:.86rem;line-height:1.55;color:rgba(255,255,255,.88);overflow-wrap:anywhere}
-.gpcs-digital-board-card time{display:block;margin-top:6px;font-size:.72rem;color:rgba(255,255,255,.65)}
-.gpcs-digital-board-empty{padding:12px 0;font-size:.86rem;color:rgba(255,255,255,.78)}
+/* SECTION 4 — Digital Board UI/UX.
+   The board is intentionally static rather than auto-scrolling: notices remain readable,
+   keyboard/touch friendly and do not create involuntary motion. */
+.gpcs-digital-board{position:relative;isolation:isolate;margin:20px auto 10px;width:min(calc(100% - 32px),1240px);overflow:hidden;border:1px solid rgba(147,197,253,.24);border-radius:24px;padding:20px;background:linear-gradient(135deg,#06152f 0%,#0b2d63 56%,#1749ad 100%);color:#fff;box-shadow:0 18px 48px rgba(13,42,95,.18)}
+.gpcs-digital-board::before{content:"";position:absolute;z-index:-1;inset:-45% auto auto 48%;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,.20),transparent 66%);pointer-events:none}
+.gpcs-digital-board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.14)}
+.gpcs-digital-board-head h2{display:flex;align-items:center;gap:9px;margin:0;color:#fff;font-size:clamp(1.05rem,1rem + .35vw,1.28rem);font-weight:800;line-height:1.25;letter-spacing:-.01em}
+.gpcs-digital-board-head h2::before{content:"";display:inline-block;width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#67e8f9;box-shadow:0 0 0 5px rgba(103,232,249,.12)}
+.gpcs-digital-board-head span{max-width:32rem;color:#d7e7ff;font-size:.82rem;font-weight:600;line-height:1.45;text-align:right}
+.gpcs-digital-board-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:stretch}
+.gpcs-digital-board-card{position:relative;display:flex;min-width:0;min-height:148px;flex-direction:column;border:1px solid rgba(255,255,255,.16);border-radius:17px;padding:15px 16px 14px;background:linear-gradient(180deg,rgba(255,255,255,.115),rgba(255,255,255,.075));color:#fff;text-decoration:none;overflow-wrap:anywhere;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);transition:transform .18s ease,border-color .18s ease,background-color .18s ease,box-shadow .18s ease}
+a.gpcs-digital-board-card{padding-right:42px;cursor:pointer}
+a.gpcs-digital-board-card::after{content:"↗";position:absolute;top:14px;right:15px;display:grid;width:28px;height:28px;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(255,255,255,.08);color:#eaf3ff;font-size:.88rem;line-height:1}
+.gpcs-digital-board-card:hover{transform:translateY(-2px);border-color:rgba(147,197,253,.42);background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.09));box-shadow:0 12px 24px rgba(2,8,23,.16)}
+.gpcs-digital-board-card:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+.gpcs-digital-board-card strong{display:block;margin:0 0 7px;padding-right:2px;color:#fff;font-size:.98rem;font-weight:800;line-height:1.35;letter-spacing:-.005em}
+.gpcs-digital-board-card p{display:-webkit-box;margin:0;color:#e7efff;font-size:.875rem;line-height:1.58;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow-wrap:anywhere}
+.gpcs-digital-board-card time{display:block;margin-top:auto;padding-top:11px;color:#c7d8f6;font-size:.75rem;font-weight:650;line-height:1.35}
+.gpcs-digital-board-card:only-child{grid-column:1/-1;min-height:0}
+.gpcs-digital-board-empty{grid-column:1/-1;display:flex;min-height:92px;align-items:center;justify-content:center;border:1px dashed rgba(191,219,254,.32);border-radius:16px;padding:20px;background:rgba(255,255,255,.065);color:#dce9ff;font-size:.88rem;font-weight:650;line-height:1.55;text-align:center}
 
 @media(max-width:1024px){
   .route-grid,.hero-grid{grid-template-columns:1fr!important}
+  .gpcs-digital-board-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media(max-width:599px){
+  .gpcs-digital-board{width:calc(100% - 18px);margin-top:12px;border-radius:19px;padding:14px}
+  .gpcs-digital-board::before{width:320px;height:320px;inset:-25% auto auto 40%}
+  .gpcs-digital-board-head{align-items:flex-start;flex-direction:column;gap:5px;margin-bottom:12px;padding-bottom:12px}
+  .gpcs-digital-board-head span{max-width:none;font-size:.78rem;text-align:left}
+  .gpcs-digital-board-list{grid-template-columns:minmax(0,1fr);gap:9px}
+  .gpcs-digital-board-card{min-height:0;border-radius:14px;padding:13px 14px}
+  a.gpcs-digital-board-card{padding-right:40px}
+  .gpcs-digital-board-card p{-webkit-line-clamp:5;font-size:.845rem;line-height:1.55}
+  .gpcs-digital-board-card strong{font-size:.94rem}
+  .gpcs-digital-board-card time{padding-top:9px}
+  .gpcs-digital-board-empty{min-height:78px;padding:16px}
 }
 
 @media(max-width:480px){
   .container{width:min(calc(100% - 18px),1240px)}
-  .gpcs-digital-board{width:calc(100% - 18px);padding:15px;border-radius:18px}
-  .gpcs-digital-board-head{align-items:flex-start;flex-direction:column;gap:2px}
   .route-actions,.hero-actions{flex-wrap:wrap}
   .route-btn,.btn,button{min-height:44px}
   .route-card{min-width:0}
@@ -38,11 +60,16 @@ body{background-image:radial-gradient(circle at 8% 0%,rgba(59,130,246,.10),trans
 }
 
 @media(min-width:600px) and (max-width:1024px){
-  .gpcs-digital-board{width:min(calc(100% - 28px),1240px)}
+  .gpcs-digital-board{width:min(calc(100% - 28px),1240px);padding:18px}
+  .gpcs-digital-board-card{min-height:142px}
 }
 
 @media(min-width:1280px){
   main{min-height:60vh}
+}
+
+@media(hover:none),(pointer:coarse){
+  .gpcs-digital-board-card:hover{transform:none}
 }
 
 @media(prefers-reduced-motion:reduce){

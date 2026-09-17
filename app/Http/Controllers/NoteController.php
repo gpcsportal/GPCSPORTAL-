@@ -9,6 +9,7 @@ use App\Services\PdfCompressionService;
 use App\Services\UploadMetadataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class NoteController extends Controller
 {
@@ -55,41 +56,63 @@ class NoteController extends Controller
             ], 422);
         }
 
-        $path = null;
-        $name = null;
-        $mime = null;
-        $size = 0;
+        $file = $request->file('attachment');
+        $fileHash = $file ? hash_file('sha256', $file->getRealPath()) : null;
 
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $path = $file->store('notes', 'public');
-            $name = $file->getClientOriginalName();
-            $mime = $file->getMimeType() ?: 'application/octet-stream';
-            $absolutePath = storage_path('app/public/'.$path);
-
-            if ($mime === 'application/pdf') {
-                $pdf->compressInPlace($absolutePath);
-            } elseif (str_starts_with($mime, 'image/')) {
-                $images->compressImageInPlace($absolutePath);
-            }
-
-            $size = filesize($absolutePath) ?: $file->getSize();
+        if ($fileHash && Note::where('file_hash', $fileHash)->exists()) {
+            return response()->json([
+                'message' => 'This exact Notes file has already been uploaded.',
+            ], 422);
         }
 
-        $note = Note::create(array_merge($data, [
-            'user_id' => $request->user()->id,
-            'attachment_path' => $path,
-            'original_name' => $name,
-            'mime_type' => $mime,
-            'file_size' => $size,
-            'fingerprint' => $fingerprint,
-            'status' => 'pending',
-        ]));
+        $path = null;
 
-        return response()->json([
-            'message' => 'Notes submitted for Admin approval.',
-            'id' => $note->id,
-        ], 201);
+        try {
+            $name = null;
+            $mime = null;
+            $size = 0;
+
+            if ($file) {
+                $path = $file->store('notes', 'public');
+                $name = $file->getClientOriginalName();
+                $mime = $file->getMimeType() ?: 'application/octet-stream';
+                $absolutePath = storage_path('app/public/'.$path);
+
+                if ($mime === 'application/pdf') {
+                    $pdf->compressInPlace($absolutePath);
+                } elseif (str_starts_with($mime, 'image/')) {
+                    $images->compressImageInPlace($absolutePath);
+                }
+
+                $size = filesize($absolutePath) ?: $file->getSize();
+            }
+
+            $note = Note::create(array_merge($data, [
+                'user_id' => $request->user()->id,
+                'attachment_path' => $path,
+                'original_name' => $name,
+                'mime_type' => $mime,
+                'file_size' => $size,
+                'file_hash' => $fileHash,
+                'fingerprint' => $fingerprint,
+                'status' => 'pending',
+            ]));
+
+            return response()->json([
+                'message' => 'Notes submitted for Admin approval.',
+                'id' => $note->id,
+            ], 201);
+        } catch (Throwable $exception) {
+            if ($path) {
+                Storage::disk('public')->delete($path);
+            }
+
+            report($exception);
+
+            return response()->json([
+                'message' => 'Notes upload could not be completed. Please try again.',
+            ], 500);
+        }
     }
 
     public function download(Note $note)

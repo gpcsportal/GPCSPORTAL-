@@ -69,6 +69,33 @@
   const adminForm = document.getElementById('gpcsHiddenAdminForm');
   if (adminForm) adminForm.setAttribute('action', '/admin/hidden-login');
 
+  const ensureLoginEnhancements = () => {
+    for (const id of ['previewStudentPassword', 'previewFacultyPassword']) {
+      const form = document.getElementById(id);
+      if (!form || form.querySelector('input[name="remember"]')) continue;
+
+      const remember = document.createElement('label');
+      remember.className = 'auth-preview-check gpcs-remember-check';
+      remember.innerHTML = '<input type="checkbox" name="remember" value="1"> <span>Remember me on this device</span>';
+
+      const linkRow = form.querySelector('.auth-preview-linkrow');
+      if (linkRow) linkRow.before(remember);
+      else form.querySelector('button[type="submit"]')?.before(remember);
+    }
+
+    const hash = window.location.hash;
+    if (hash !== '#student-dashboard' && hash !== '#faculty-dashboard') return;
+
+    const dashboard = document.querySelector('.reference-dashboard-section');
+    if (!dashboard) return;
+
+    dashboard.id = hash.slice(1);
+    if (dashboard.dataset.roleLandingHandled !== '1') {
+      dashboard.dataset.roleLandingHandled = '1';
+      window.requestAnimationFrame(() => dashboard.scrollIntoView({block:'start'}));
+    }
+  };
+
   const inputs = (form, selector='input,select,textarea') => [...form.querySelectorAll(selector)].filter(x => !x.disabled);
   const valueByLabel = (form, labelText) => {
     const label = [...form.querySelectorAll('label')].find(l => l.textContent.trim().toLowerCase().startsWith(labelText.toLowerCase()));
@@ -129,7 +156,8 @@
     try {
       if (id === 'previewStudentPassword' || id === 'previewFacultyPassword') {
         const els = inputs(form,'input'); const email=els.find(x=>x.type==='email')?.value||''; const password=els.find(x=>x.type==='password')?.value||'';
-        const body=await submitJson(routes.login,{email,password,role:id.includes('Faculty')?'faculty':'student'}); toast(body.message); location.href=body.redirect||'/'; return;
+        const remember=form.querySelector('input[name="remember"]')?.checked===true;
+        const body=await submitJson(routes.login,{email,password,role:id.includes('Faculty')?'faculty':'student',remember}); toast(body.message); location.href=body.redirect||'/'; return;
       }
       if (id === 'previewDynamicRegister') {
         const role = form.querySelector('[data-faculty-fields]')?.hidden === false ? 'faculty' : 'student';
@@ -205,10 +233,10 @@
     }
   };
 
-  const observer=new MutationObserver(()=>loadLibraries());
+  const observer=new MutationObserver(()=>{ensureLoginEnhancements();loadLibraries();});
   observer.observe(document.documentElement,{childList:true,subtree:true});
-  document.addEventListener('DOMContentLoaded',()=>{loadDigitalBoard();loadLibraries();});
-  setTimeout(()=>{loadDigitalBoard();loadLibraries();},0);
+  document.addEventListener('DOMContentLoaded',()=>{ensureLoginEnhancements();loadDigitalBoard();loadLibraries();});
+  setTimeout(()=>{ensureLoginEnhancements();loadDigitalBoard();loadLibraries();},0);
 
   document.addEventListener('change', async (event) => {
     if (event.target?.id !== 'previewGalleryInput') return;

@@ -54,6 +54,9 @@
     try { body = await res.json(); } catch (_) {}
 
     if (!res.ok) {
+      if (res.status === 413) {
+        throw new Error('The selected file is larger than the server upload limit.');
+      }
       if (res.status === 419) {
         throw new Error('Your secure session expired. Refresh the page and try again.');
       }
@@ -177,13 +180,13 @@
         if(f.size > 100 * 1024 * 1024) throw new Error('Paper file must be 100 MB or smaller.');
         fd.set('file',f);
         for(const [label,key] of [['Paper Code','paper_code'],['Subject Code','subject_code'],['Paper Name','paper_name'],['Subject Name','subject_name'],['Branch','branch'],['Semester','semester'],['Year','year'],['Session','session']]){const v=valueByLabel(form,label);if(v)fd.set(key,v);}
-        const body=await request(routes.paperStore,{method:'POST',body:fd,timeoutMs:180000});toast(body.message);form.reset();return;
+        const body=await request(routes.paperStore,{method:'POST',body:fd,timeoutMs:600000});toast(body.message);form.reset();return;
       }
       if (id === 'previewNoteForm') {
         const fd=new FormData(form);
         const attachment=form.querySelector('input[type="file"]')?.files?.[0];
         if(attachment && attachment.size > 200 * 1024 * 1024) throw new Error('Notes file must be 200 MB or smaller.');
-        const body=await request(routes.noteStore,{method:'POST',body:fd,timeoutMs:180000});toast(body.message);form.reset();return;
+        const body=await request(routes.noteStore,{method:'POST',body:fd,timeoutMs:900000});toast(body.message);form.reset();return;
       }
       if (id === 'previewContactForm') { const els=inputs(form); const body=await submitJson(routes.contactStore,{name:els[0]?.value||'',contact:els[1]?.value||'',message:els[2]?.value||''});toast(body.message);form.reset();return; }
       if (id === 'previewResetForm') { const email=form.querySelector('input[name="email"]')?.value?.trim() || valueByLabel(form,'Email ID'); if(!email.includes('@'))throw new Error('Enter the registered Email ID.'); const body=await submitJson(routes.forgot,{email});toast(body.message);return; }

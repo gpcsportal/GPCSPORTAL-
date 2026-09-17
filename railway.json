@@ -5,10 +5,10 @@
   },
   "deploy": {
     "preDeployCommand": [
+      "php artisan optimize:clear",
       "php artisan migrate --force",
       "php artisan db:seed --class=SubjectMasterSeeder --force"
     ],
-    "startCommand": "PHPRC=/app/php.ini php artisan serve --host=0.0.0.0 --port=$PORT",
     "healthcheckPath": "/up",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",

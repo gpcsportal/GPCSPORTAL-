@@ -9,6 +9,7 @@ use App\Services\PdfCompressionService;
 use App\Services\UploadMetadataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class PaperController extends Controller
 {
@@ -54,30 +55,53 @@ class PaperController extends Controller
         }
 
         $file = $request->file('file');
-        $path = $file->store('papers', 'public');
-        $absolutePath = storage_path('app/public/'.$path);
-        $mime = $file->getMimeType() ?: 'application/octet-stream';
+        $fileHash = hash_file('sha256', $file->getRealPath());
 
-        if ($mime === 'application/pdf') {
-            $pdf->compressInPlace($absolutePath);
-        } elseif (str_starts_with($mime, 'image/')) {
-            $images->compressImageInPlace($absolutePath);
+        if ($fileHash && Paper::where('file_hash', $fileHash)->exists()) {
+            return response()->json([
+                'message' => 'This exact paper file has already been uploaded.',
+            ], 422);
         }
 
-        $paper = Paper::create(array_merge($data, [
-            'user_id' => $request->user()->id,
-            'file_path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $mime,
-            'file_size' => filesize($absolutePath) ?: $file->getSize(),
-            'fingerprint' => $fingerprint,
-            'status' => 'pending',
-        ]));
+        $path = null;
 
-        return response()->json([
-            'message' => 'Paper uploaded and sent for Admin review.',
-            'id' => $paper->id,
-        ], 201);
+        try {
+            $path = $file->store('papers', 'public');
+            $absolutePath = storage_path('app/public/'.$path);
+            $mime = $file->getMimeType() ?: 'application/octet-stream';
+
+            if ($mime === 'application/pdf') {
+                $pdf->compressInPlace($absolutePath);
+            } elseif (str_starts_with($mime, 'image/')) {
+                $images->compressImageInPlace($absolutePath);
+            }
+
+            $paper = Paper::create(array_merge($data, [
+                'user_id' => $request->user()->id,
+                'file_path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $mime,
+                'file_size' => filesize($absolutePath) ?: $file->getSize(),
+                'file_hash' => $fileHash ?: null,
+                'fingerprint' => $fingerprint,
+                'status' => 'pending',
+            ]));
+
+            return response()->json([
+                'message' => 'Paper uploaded and sent for Admin review.',
+                'id' => $paper->id,
+            ], 201);
+        } catch (Throwable $exception) {
+            if ($path) {
+                Storage::disk('public')->delete($path);
+            }
+
+            report($exception);
+
+            return response()->json([
+                'message' => 'Paper upload could not be completed. Please try again.',
+            ], 500);
+        }
     }
 
     public function download(Paper $paper)

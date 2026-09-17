@@ -14,6 +14,7 @@ body{background-image:radial-gradient(circle at 8% 0%,rgba(59,130,246,.10),trans
 /* SECTION 4 — Digital Board UI/UX.
    The board is intentionally static rather than auto-scrolling: notices remain readable,
    keyboard/touch friendly and do not create involuntary motion. */
+.gpcs-digital-board,.gpcs-digital-board *{box-sizing:border-box}
 .gpcs-digital-board{position:relative;isolation:isolate;margin:20px auto 10px;width:min(calc(100% - 32px),1240px);overflow:hidden;border:1px solid rgba(147,197,253,.24);border-radius:24px;padding:20px;background:linear-gradient(135deg,#06152f 0%,#0b2d63 56%,#1749ad 100%);color:#fff;box-shadow:0 18px 48px rgba(13,42,95,.18)}
 .gpcs-digital-board::before{content:"";position:absolute;z-index:-1;inset:-45% auto auto 48%;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,.20),transparent 66%);pointer-events:none}
 .gpcs-digital-board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.14)}
@@ -27,7 +28,7 @@ a.gpcs-digital-board-card::after{content:"↗";position:absolute;top:14px;right:
 .gpcs-digital-board-card:hover{transform:translateY(-2px);border-color:rgba(147,197,253,.42);background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.09));box-shadow:0 12px 24px rgba(2,8,23,.16)}
 .gpcs-digital-board-card:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
 .gpcs-digital-board-card strong{display:block;margin:0 0 7px;padding-right:2px;color:#fff;font-size:.98rem;font-weight:800;line-height:1.35;letter-spacing:-.005em}
-.gpcs-digital-board-card p{display:-webkit-box;margin:0;color:#e7efff;font-size:.875rem;line-height:1.58;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow-wrap:anywhere}
+.gpcs-digital-board-card p{margin:0;color:#e7efff;font-size:.875rem;line-height:1.58;overflow-wrap:anywhere;hyphens:auto}
 .gpcs-digital-board-card time{display:block;margin-top:auto;padding-top:11px;color:#c7d8f6;font-size:.75rem;font-weight:650;line-height:1.35}
 .gpcs-digital-board-card:only-child{grid-column:1/-1;min-height:0}
 .gpcs-digital-board-empty{grid-column:1/-1;display:flex;min-height:92px;align-items:center;justify-content:center;border:1px dashed rgba(191,219,254,.32);border-radius:16px;padding:20px;background:rgba(255,255,255,.065);color:#dce9ff;font-size:.88rem;font-weight:650;line-height:1.55;text-align:center}
@@ -45,7 +46,7 @@ a.gpcs-digital-board-card::after{content:"↗";position:absolute;top:14px;right:
   .gpcs-digital-board-list{grid-template-columns:minmax(0,1fr);gap:9px}
   .gpcs-digital-board-card{min-height:0;border-radius:14px;padding:13px 14px}
   a.gpcs-digital-board-card{padding-right:40px}
-  .gpcs-digital-board-card p{-webkit-line-clamp:5;font-size:.845rem;line-height:1.55}
+  .gpcs-digital-board-card p{font-size:.845rem;line-height:1.55}
   .gpcs-digital-board-card strong{font-size:.94rem}
   .gpcs-digital-board-card time{padding-top:9px}
   .gpcs-digital-board-empty{min-height:78px;padding:16px}

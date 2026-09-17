@@ -40,6 +40,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Use Laravel's normal production exception handling.
+        // Keep API/metadata failures machine-readable even when the browser does
+        // not send an explicit application/json Accept header. Laravel still
+        // owns status-code mapping and hides exception details in production.
+        $exceptions->shouldRenderJsonWhen(
+            static fn (Request $request, \Throwable $exception): bool =>
+                $request->expectsJson()
+                || $request->is('api/*')
+                || $request->is('metadata/*')
+        );
     })
     ->create();

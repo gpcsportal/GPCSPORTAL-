@@ -6,6 +6,7 @@ use App\Models\GalleryImage;
 use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Throwable;
 
 class GalleryController extends Controller
@@ -38,14 +39,39 @@ class GalleryController extends Controller
 
         $file = $request->file('image');
         $path = null;
+        $disk = Storage::disk('public');
+
+        if (! $file || ! $file->isValid()) {
+            return response()->json([
+                'message' => 'The selected image could not be read. Please choose it again.',
+            ], 422);
+        }
 
         try {
-            $path = $file->store('gallery', 'public');
-            $absolutePath = storage_path('app/public/'.$path);
+            $storedPath = $file->store('gallery', 'public');
+            if (! is_string($storedPath) || $storedPath === '') {
+                throw new RuntimeException('Gallery image storage returned an empty path.');
+            }
+
+            $path = $storedPath;
+            if (! $disk->exists($path)) {
+                throw new RuntimeException('Stored gallery image is not available on disk.');
+            }
+
+            $absolutePath = $disk->path($path);
+            if (! is_file($absolutePath) || ! is_readable($absolutePath)) {
+                throw new RuntimeException('Stored gallery image is not readable.');
+            }
 
             // Compression is fail-safe inside the image service; if a later
             // database operation fails, the stored file is still removed below.
             $images->compressImageInPlace($absolutePath);
+
+            clearstatcache(true, $absolutePath);
+            $finalSize = filesize($absolutePath);
+            if ($finalSize === false || $finalSize <= 0) {
+                throw new RuntimeException('Stored gallery image is empty after processing.');
+            }
 
             $image = GalleryImage::create([
                 'user_id' => $request->user()->id,
@@ -54,7 +80,7 @@ class GalleryController extends Controller
                 'file_path' => $path,
                 'original_name' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
-                'file_size' => filesize($absolutePath) ?: $file->getSize(),
+                'file_size' => $finalSize,
                 'status' => 'pending',
             ]);
 
@@ -64,7 +90,7 @@ class GalleryController extends Controller
             ], 201);
         } catch (Throwable $exception) {
             if ($path) {
-                Storage::disk('public')->delete($path);
+                $disk->delete($path);
             }
 
             report($exception);

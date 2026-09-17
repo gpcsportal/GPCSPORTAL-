@@ -1,0 +1,65 @@
+name: GPCS Code Quality
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      APP_KEY: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/testing.sqlite
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: curl, fileinfo, gd, mbstring, pdo_mysql, pdo_sqlite
+          coverage: none
+
+      - name: Validate Composer files
+        run: |
+          test -f composer.lock
+          composer validate --strict --no-interaction
+
+      - name: Install locked dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Audit locked dependencies
+        run: composer audit --locked --no-interaction
+
+      - name: PHP and JavaScript syntax scan
+        run: |
+          find app bootstrap config database routes tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          node --check public/assets/gpcs-backend-bridge.js
+
+      - name: Prepare isolated test database
+        run: |
+          rm -f database/testing.sqlite
+          touch database/testing.sqlite
+          php artisan migrate --force
+
+      - name: Boot routes
+        run: php artisan route:list --except-vendor
+
+      - name: Run full test suite
+        run: php artisan test

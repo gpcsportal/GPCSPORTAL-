@@ -9,6 +9,7 @@ use App\Models\Note;
 use App\Models\Paper;
 use App\Services\AdminActivityService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class AdminContentController extends Controller
@@ -55,6 +56,8 @@ class AdminContentController extends Controller
             'rejection_reason' => $validated['rejection_reason'] ?? null,
         ]);
 
+        Cache::forget('portal.home.counts');
+
         $log->log('content_status_changed', $type, $id, [
             'status' => $validated['status'],
         ]);
@@ -77,6 +80,7 @@ class AdminContentController extends Controller
         }
 
         $item->delete();
+        Cache::forget('portal.home.counts');
         $log->log('content_deleted', $type, $id);
 
         return back()->with('status', 'Content deleted.');

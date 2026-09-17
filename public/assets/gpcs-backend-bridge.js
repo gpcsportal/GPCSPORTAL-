@@ -4,13 +4,16 @@
   const csrf = cfg.csrf || '';
   const toast = (message) => { if (typeof window.toast === 'function') window.toast(message); else alert(message); };
 
-  if (!document.querySelector('link[data-gpcs-audit-fixes]')) {
+  const ensureStylesheet = (href, dataKey) => {
+    if (document.querySelector(`link[data-${dataKey}]`)) return;
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
-    stylesheet.href = '/assets/gpcs-audit-fixes.css';
-    stylesheet.dataset.gpcsAuditFixes = '1';
+    stylesheet.href = href;
+    stylesheet.dataset[dataKey.replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = '1';
     document.head.appendChild(stylesheet);
-  }
+  };
+  ensureStylesheet('/assets/gpcs-audit-fixes.css', 'gpcs-audit-fixes');
+  ensureStylesheet('/assets/gpcs-responsive.css', 'gpcs-responsive');
 
   const normalizeRequestUrl = (value) => {
     if (!value) return value;
@@ -232,14 +235,20 @@
     const gallery=document.getElementById('previewGalleryLive');
     if(gallery && gallery.dataset.liveLoaded!=='1'){
       gallery.dataset.liveLoaded='1';
-      try{const rows=await request(routes.galleryApi);gallery.innerHTML=rows.length?rows.map(g=>`<a class="route-gallery-card" href="${escapeHtml(g.image_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(g.image_url)}" alt="${escapeHtml(g.caption||g.category||'College gallery image')}" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:10px"><b>${escapeHtml(g.caption||g.category||'College Image')}</b><small>${escapeHtml(g.category||'Gallery')}</small></a>`).join(''):'<div class="route-gallery-card"><b>No approved gallery images are available yet.</b></div>';}catch(e){gallery.innerHTML='<div class="route-gallery-card"><div><b>Unable to load gallery right now.</b></div></div>';}
+      try{const rows=await request(routes.galleryApi);gallery.innerHTML=rows.length?rows.map(g=>`<a class="route-gallery-card" href="${escapeHtml(g.image_url)}" target="_blank" rel="noopener"><img src="${escapeHtml(g.image_url)}" alt="${escapeHtml(g.caption||g.category||'College gallery image')}" loading="lazy" decoding="async" fetchpriority="low" style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:10px"><b>${escapeHtml(g.caption||g.category||'College Image')}</b><small>${escapeHtml(g.category||'Gallery')}</small></a>`).join(''):'<div class="route-gallery-card"><b>No approved gallery images are available yet.</b></div>';}catch(e){gallery.innerHTML='<div class="route-gallery-card"><div><b>Unable to load gallery right now.</b></div></div>';}
     }
   };
 
-  const observer=new MutationObserver(()=>{ensureLoginEnhancements();loadLibraries();});
-  observer.observe(document.documentElement,{childList:true,subtree:true});
-  document.addEventListener('DOMContentLoaded',()=>{ensureLoginEnhancements();loadDigitalBoard();loadLibraries();});
-  setTimeout(()=>{ensureLoginEnhancements();loadDigitalBoard();loadLibraries();},0);
+  const initializePortalBridge = () => {
+    ensureLoginEnhancements();
+    loadDigitalBoard();
+    const runLibraries = () => loadLibraries();
+    if ('requestIdleCallback' in window) window.requestIdleCallback(runLibraries,{timeout:1400});
+    else window.setTimeout(runLibraries,120);
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initializePortalBridge, {once:true});
+  else initializePortalBridge();
 
   document.addEventListener('change', async (event) => {
     if (event.target?.id !== 'previewGalleryInput') return;

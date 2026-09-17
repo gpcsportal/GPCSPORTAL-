@@ -6,6 +6,7 @@ use App\Models\GalleryImage;
 use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class GalleryController extends Controller
 {
@@ -36,26 +37,42 @@ class GalleryController extends Controller
         ]);
 
         $file = $request->file('image');
-        $path = $file->store('gallery', 'public');
-        $absolutePath = storage_path('app/public/'.$path);
+        $path = null;
 
-        $images->compressImageInPlace($absolutePath);
+        try {
+            $path = $file->store('gallery', 'public');
+            $absolutePath = storage_path('app/public/'.$path);
 
-        $image = GalleryImage::create([
-            'user_id' => $request->user()->id,
-            'category' => $validated['category'],
-            'caption' => $validated['caption'] ?? null,
-            'file_path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'file_size' => filesize($absolutePath) ?: $file->getSize(),
-            'status' => 'pending',
-        ]);
+            // Compression is fail-safe inside the image service; if a later
+            // database operation fails, the stored file is still removed below.
+            $images->compressImageInPlace($absolutePath);
 
-        return response()->json([
-            'message' => 'Image uploaded for Admin review.',
-            'id' => $image->id,
-        ], 201);
+            $image = GalleryImage::create([
+                'user_id' => $request->user()->id,
+                'category' => $validated['category'],
+                'caption' => $validated['caption'] ?? null,
+                'file_path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
+                'file_size' => filesize($absolutePath) ?: $file->getSize(),
+                'status' => 'pending',
+            ]);
+
+            return response()->json([
+                'message' => 'Image uploaded for Admin review.',
+                'id' => $image->id,
+            ], 201);
+        } catch (Throwable $exception) {
+            if ($path) {
+                Storage::disk('public')->delete($path);
+            }
+
+            report($exception);
+
+            return response()->json([
+                'message' => 'Image upload could not be completed. Please try again.',
+            ], 500);
+        }
     }
 
     public function show(GalleryImage $image)

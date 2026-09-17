@@ -1,5 +1,7 @@
 <?php
 
+$isProduction = (string) env('APP_ENV', 'production') === 'production';
+
 return [
     'driver' => env('SESSION_DRIVER', 'database'),
     'lifetime' => (int) env('SESSION_LIFETIME', 120),
@@ -15,11 +17,14 @@ return [
     'lottery' => [2, 100],
 
     'cookie' => env('SESSION_COOKIE', 'gpcs_portal_session'),
-    'path' => env('SESSION_PATH', '/'),
-    'domain' => env('SESSION_DOMAIN'),
+    'path' => '/',
 
-    'secure' => env('SESSION_SECURE_COOKIE', true),
-    'http_only' => env('SESSION_HTTP_ONLY', true),
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
-    'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
+    // Host-only cookies avoid stale or mismatched Railway domain settings.
+    'domain' => $isProduction ? null : env('SESSION_DOMAIN'),
+
+    // Railway public traffic is HTTPS; always mark production session cookies Secure.
+    'secure' => $isProduction ? true : env('SESSION_SECURE_COOKIE', false),
+    'http_only' => true,
+    'same_site' => 'lax',
+    'partitioned' => false,
 ];

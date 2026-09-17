@@ -34,12 +34,26 @@ final class SafePortalRedirect
             return $fallback;
         }
 
-        if (isset($parts['scheme'], $parts['host']) || isset($parts['scheme']) || isset($parts['host']) || isset($parts['user']) || isset($parts['pass'])) {
+        if (isset($parts['scheme']) || isset($parts['host']) || isset($parts['user']) || isset($parts['pass'])) {
             return $fallback;
         }
 
         $path = $parts['path'] ?? '/';
         if (! str_starts_with($path, '/') || str_starts_with($path, '//')) {
+            return $fallback;
+        }
+
+        // Never send an authenticated user back into an authentication action,
+        // logout action, or password-recovery endpoint.
+        $blockedPaths = [
+            '/login',
+            '/register',
+            '/logout',
+            '/forgot-password',
+            '/reset-password',
+        ];
+
+        if (in_array(rtrim($path, '/') ?: '/', $blockedPaths, true)) {
             return $fallback;
         }
 

@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 Request::HEADER_X_FORWARDED_PREFIX
         );
 
+        // This portal uses a modal/section login instead of a GET /login route.
+        // Explicit guest redirection prevents protected web routes from trying
+        // to resolve a missing named "login" route.
+        $middleware->redirectGuestsTo('/#login');
+
         $middleware->append(SecurityHeaders::class);
 
         $middleware->alias([

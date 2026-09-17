@@ -17,14 +17,17 @@ class PortalAuthController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
             'role' => ['required', Rule::in(['student', 'faculty'])],
+            'remember' => ['sometimes', 'boolean'],
         ]);
+
+        $remember = (bool) ($validated['remember'] ?? false);
 
         if (! Auth::attempt([
             'email' => $validated['email'],
             'password' => $validated['password'],
             'role' => $validated['role'],
             'is_active' => true,
-        ], $request->boolean('remember'))) {
+        ], $remember)) {
             return response()->json([
                 'message' => 'Invalid credentials, role, or account is awaiting approval.',
             ], 422);
@@ -36,7 +39,7 @@ class PortalAuthController extends Controller
         return response()->json([
             'message' => 'Signed in successfully.',
             'role' => $request->user()->role,
-            'redirect' => route('portal.home', absolute: false),
+            'redirect' => $this->redirectForRole($request->user()->role),
         ]);
     }
 
@@ -91,7 +94,7 @@ class PortalAuthController extends Controller
                 'message' => 'Faculty registration submitted. An Admin must approve the account before sign-in.',
                 'role' => 'faculty',
                 'pending_approval' => true,
-                'redirect' => route('portal.home', absolute: false),
+                'redirect' => route('portal.home', absolute: false).'#login',
             ], 201);
         }
 
@@ -101,7 +104,7 @@ class PortalAuthController extends Controller
         return response()->json([
             'message' => 'Account created successfully.',
             'role' => 'student',
-            'redirect' => route('portal.home', absolute: false),
+            'redirect' => $this->redirectForRole('student'),
         ], 201);
     }
 
@@ -112,5 +115,14 @@ class PortalAuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function redirectForRole(string $role): string
+    {
+        return match ($role) {
+            'student' => route('portal.home', absolute: false).'#student-dashboard',
+            'faculty' => route('portal.home', absolute: false).'#faculty-dashboard',
+            default => route('portal.home', absolute: false),
+        };
     }
 }

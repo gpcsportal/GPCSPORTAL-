@@ -14,8 +14,11 @@ class FileCompressionService
             return false;
         }
 
-        $backup = $absolutePath.'.gpcs-backup';
-        $temporary = $absolutePath.'.gpcs-compressed';
+        $token = bin2hex(random_bytes(8));
+        $extension = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION));
+        $tempRoot = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR);
+        $backup = $tempRoot.DIRECTORY_SEPARATOR.'gpcs-img-backup-'.$token;
+        $temporary = $tempRoot.DIRECTORY_SEPARATOR.'gpcs-img-compressed-'.$token.'.'.$extension;
         $originalSize = filesize($absolutePath) ?: 0;
 
         if (! @copy($absolutePath, $backup)) {
@@ -25,7 +28,6 @@ class FileCompressionService
         try {
             $manager = new ImageManager(new Driver());
             $image = $manager->read($absolutePath)->scaleDown(width: 1920, height: 1920);
-            $extension = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION));
             $encoded = match ($extension) {
                 'jpg', 'jpeg' => $image->toJpeg(82),
                 'png' => $image->toPng(),
@@ -40,25 +42,25 @@ class FileCompressionService
 
             $compressedSize = filesize($temporary) ?: 0;
             if ($originalSize > 0 && $compressedSize >= $originalSize) {
-                @unlink($temporary);
-                @unlink($backup);
                 return false;
             }
 
-            if (! @rename($temporary, $absolutePath)) {
-                throw new RuntimeException('Unable to replace image atomically.');
+            // Keep only one copy on the persistent upload volume. The backup and
+            // compressed candidate live in Railway's ephemeral /tmp workspace.
+            if (! @copy($temporary, $absolutePath)) {
+                throw new RuntimeException('Unable to replace image safely.');
             }
 
-            @unlink($backup);
             return true;
         } catch (Throwable $exception) {
-            @unlink($temporary);
             if (is_file($backup)) {
                 @copy($backup, $absolutePath);
-                @unlink($backup);
             }
             report($exception);
             return false;
+        } finally {
+            @unlink($temporary);
+            @unlink($backup);
         }
     }
 }

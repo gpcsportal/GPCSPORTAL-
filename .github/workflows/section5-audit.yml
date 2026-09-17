@@ -1,0 +1,58 @@
+name: Section 5 Codebase Audit
+
+on:
+  push:
+    branches:
+      - audit/section-5-codebase-error-scan
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: curl, fileinfo, gd, mbstring, pdo_mysql
+          coverage: none
+
+      - name: Validate Composer manifest
+        run: composer validate --strict --no-interaction
+
+      - name: Generate deterministic dependency lock
+        run: composer update --no-install --no-interaction --no-progress
+
+      - name: Audit locked dependencies
+        run: composer audit --locked --no-interaction
+
+      - name: Install locked dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: PHP and JavaScript syntax scan
+        run: |
+          find app bootstrap config database routes tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          node --check public/assets/gpcs-backend-bridge.js
+
+      - name: Runtime safety feature tests
+        run: php artisan test --testsuite=Feature --filter=RuntimeSafetyTest
+
+      - name: Commit composer.lock
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add composer.lock
+          if git diff --cached --quiet; then
+            echo "composer.lock already up to date"
+          else
+            git commit -m "Section 5: lock audited Composer dependencies"
+            git push
+          fi

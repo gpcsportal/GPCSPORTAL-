@@ -6,21 +6,24 @@ img{max-width:100%;height:auto}
 table{max-width:100%}
 .route-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
+/* The previous desktop theme referenced a ~2.85 MB decorative PNG on every page.
+   Keep the same blue premium feel with lightweight CSS gradients instead. */
+body{background-image:radial-gradient(circle at 8% 0%,rgba(59,130,246,.10),transparent 28rem),radial-gradient(circle at 92% 8%,rgba(34,211,238,.08),transparent 24rem),linear-gradient(180deg,#f9fbff 0,#f4f7fc 46%,#f7f9fd 100%)!important;background-attachment:scroll!important}
+[data-theme="dark"] body,body[data-theme="dark"]{background-image:radial-gradient(circle at 8% 0%,rgba(59,130,246,.13),transparent 28rem),radial-gradient(circle at 92% 8%,rgba(34,211,238,.07),transparent 24rem),linear-gradient(180deg,#050e1d 0,#06101f 48%,#07101e 100%)!important}
+
 .gpcs-digital-board{margin:18px auto 8px;width:min(calc(100% - 32px),1240px);background:linear-gradient(135deg,#081b3f,#0d2a5f 55%,#1d4ed8);color:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 18px 48px rgba(13,42,95,.16)}
 .gpcs-digital-board-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .gpcs-digital-board-head h2{margin:0;color:#fff;font-size:1.05rem}
 .gpcs-digital-board-head span{font-size:.76rem;opacity:.8}
 .gpcs-digital-board-list{display:grid;gap:10px}
-.gpcs-digital-board-card{display:block;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);border-radius:15px;padding:12px 14px;color:#fff;min-height:0}
+.gpcs-digital-board-card{display:block;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);border-radius:15px;padding:12px 14px;color:#fff;min-height:0;overflow-wrap:anywhere}
 .gpcs-digital-board-card:hover{background:rgba(255,255,255,.13)}
 .gpcs-digital-board-card strong{display:block;font-size:.96rem;margin-bottom:4px}
-.gpcs-digital-board-card p{margin:0;font-size:.86rem;line-height:1.55;color:rgba(255,255,255,.88)}
+.gpcs-digital-board-card p{margin:0;font-size:.86rem;line-height:1.55;color:rgba(255,255,255,.88);overflow-wrap:anywhere}
 .gpcs-digital-board-card time{display:block;margin-top:6px;font-size:.72rem;color:rgba(255,255,255,.65)}
 .gpcs-digital-board-empty{padding:12px 0;font-size:.86rem;color:rgba(255,255,255,.78)}
 
-/* Avoid the 2.7 MB decorative PNG on mobile/tablet. The portal keeps a lightweight gradient instead. */
 @media(max-width:1024px){
-  body{background-image:radial-gradient(circle at 8% 0%,rgba(59,130,246,.10),transparent 28rem),radial-gradient(circle at 92% 8%,rgba(34,211,238,.08),transparent 24rem),linear-gradient(180deg,#f9fbff 0,#f4f7fc 46%,#f7f9fd 100%)!important;background-attachment:scroll!important}
   .route-grid,.hero-grid{grid-template-columns:1fr!important}
 }
 
@@ -31,6 +34,7 @@ table{max-width:100%}
   .route-actions,.hero-actions{flex-wrap:wrap}
   .route-btn,.btn,button{min-height:44px}
   .route-card{min-width:0}
+  input,select,textarea,button{max-width:100%}
 }
 
 @media(min-width:600px) and (max-width:1024px){

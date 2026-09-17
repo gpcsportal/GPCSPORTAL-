@@ -21,26 +21,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->environment('production')) {
-            $railwayDomain = trim((string) env('RAILWAY_PUBLIC_DOMAIN', ''));
-            $configuredUrl = rtrim((string) config('app.url', ''), '/');
+            $origin = rtrim((string) config('app.url', ''), '/');
 
-            if ($railwayDomain !== '') {
-                $origin = 'https://'.$railwayDomain;
-            } else {
-                $origin = $configuredUrl !== ''
-                    ? preg_replace('#^http://#i', 'https://', $configuredUrl)
-                    : 'https://gpcsportal.up.railway.app';
+            if ($origin !== '') {
+                config([
+                    'filesystems.disks.public.url' => $origin.'/storage',
+                ]);
+
+                URL::forceScheme('https');
+                URL::useOrigin($origin);
             }
-
-            $origin = rtrim((string) $origin, '/');
-
-            config([
-                'app.url' => $origin,
-                'filesystems.disks.public.url' => $origin.'/storage',
-            ]);
-
-            URL::forceScheme('https');
-            URL::useOrigin($origin);
         }
 
         Paper::observe([

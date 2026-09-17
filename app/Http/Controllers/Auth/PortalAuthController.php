@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\FileCompressionService;
+use App\Support\SafePortalRedirect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -18,6 +19,7 @@ class PortalAuthController extends Controller
             'password' => ['required', 'string'],
             'role' => ['required', Rule::in(['student', 'faculty'])],
             'remember' => ['sometimes', 'boolean'],
+            'redirect' => ['nullable', 'string', 'max:2048'],
         ]);
 
         $remember = (bool) ($validated['remember'] ?? false);
@@ -29,17 +31,22 @@ class PortalAuthController extends Controller
             'is_active' => true,
         ], $remember)) {
             return response()->json([
-                'message' => 'Invalid credentials, role, or account is awaiting approval.',
+                'message' => 'Invalid credentials, role, or account is not active.',
             ], 422);
         }
 
         $request->session()->regenerate();
         $request->user()->forceFill(['last_login_at' => now()])->save();
 
+        $fallback = $this->redirectForRole($request->user()->role);
+        $intended = $validated['redirect'] ?? $request->session()->pull('url.intended');
+        $redirect = SafePortalRedirect::sanitize($intended, $fallback);
+        $request->session()->forget('url.intended');
+
         return response()->json([
             'message' => 'Signed in successfully.',
             'role' => $request->user()->role,
-            'redirect' => $this->redirectForRole($request->user()->role),
+            'redirect' => $redirect,
         ]);
     }
 
@@ -59,6 +66,7 @@ class PortalAuthController extends Controller
             'address' => 'required|string|max:1000',
             'pin_code' => 'nullable|digits:6',
             'profile_photo' => 'nullable|image|max:5120',
+            'redirect' => ['nullable', 'string', 'max:2048'],
         ];
 
         if ($role === 'student') {
@@ -75,6 +83,9 @@ class PortalAuthController extends Controller
         }
 
         $validated = $request->validate($rules);
+        $requestedRedirect = $validated['redirect'] ?? null;
+        unset($validated['redirect']);
+
         $photo = null;
 
         if ($request->hasFile('profile_photo')) {
@@ -82,29 +93,26 @@ class PortalAuthController extends Controller
             $images->compressImageInPlace(storage_path('app/public/'.$photo));
         }
 
-        $isFaculty = $role === 'faculty';
-
+        // A completed Student or Faculty sign-up is immediately usable. Admin
+        // can still suspend an account later, but there is no post-sign-up role
+        // approval gate between account creation and portal access.
         $user = User::create(array_merge($validated, [
             'profile_photo_path' => $photo,
-            'is_active' => ! $isFaculty,
+            'is_active' => true,
         ]));
-
-        if ($isFaculty) {
-            return response()->json([
-                'message' => 'Faculty registration submitted. An Admin must approve the account before sign-in.',
-                'role' => 'faculty',
-                'pending_approval' => true,
-                'redirect' => route('portal.home', absolute: false).'#login',
-            ], 201);
-        }
 
         Auth::login($user);
         $request->session()->regenerate();
 
+        $fallback = $this->redirectForRole($user->role);
+        $intended = $requestedRedirect ?? $request->session()->pull('url.intended');
+        $redirect = SafePortalRedirect::sanitize($intended, $fallback);
+        $request->session()->forget('url.intended');
+
         return response()->json([
             'message' => 'Account created successfully.',
-            'role' => 'student',
-            'redirect' => $this->redirectForRole('student'),
+            'role' => $user->role,
+            'redirect' => $redirect,
         ], 201);
     }
 

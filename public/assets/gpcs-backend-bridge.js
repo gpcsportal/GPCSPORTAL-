@@ -3,6 +3,8 @@
   const routes = cfg.routes || {};
   const csrf = cfg.csrf || '';
   const toast = (message) => { if (typeof window.toast === 'function') window.toast(message); else alert(message); };
+  const AUTH_REASON = 'Ye dekhne ke liye pehle sign in karein.';
+  const INTENDED_KEY = 'gpcs:intended';
 
   const ensureStylesheet = (href, dataKey) => {
     if (document.querySelector(`link[data-${dataKey}]`)) return;
@@ -57,6 +59,11 @@
     try { body = await res.json(); } catch (_) {}
 
     if (!res.ok) {
+      if (res.status === 401) {
+        const error = new Error(AUTH_REASON);
+        error.code = 'AUTH_REQUIRED';
+        throw error;
+      }
       if (res.status === 413) {
         throw new Error('The selected file is larger than the server upload limit.');
       }
@@ -70,6 +77,153 @@
       throw new Error(errors || 'Request failed.');
     }
     return body;
+  };
+
+  const safeInternalRedirect = (value) => {
+    if (typeof value !== 'string' || !value || value.length > 2048) return null;
+    if (value.includes('\\') || /^\s*\/\//.test(value) || /[\u0000-\u001f\u007f]/.test(value)) return null;
+    try {
+      const parsed = new URL(value, window.location.origin);
+      if (parsed.origin !== window.location.origin) return null;
+      const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      if (!path.startsWith('/') || path.startsWith('//')) return null;
+      if (['/login','/register','/logout','/forgot-password','/reset-password'].includes(parsed.pathname.replace(/\/$/, '') || '/')) return null;
+      return path;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const externalRelays = new Map([
+    ['https://www.rgpvdiploma.in/StudentLife/StudentLogin.aspx', '/go/student'],
+    ['https://www.rgpvdiploma.in/Academics/AICTEBased.aspx', '/go/syllabus'],
+    ['https://www.polygwalior.ac.in/diploma_papers.php', '/go/previous'],
+    ['https://result.rgpv.ac.in/Result/Diplomarslt.aspx', '/go/main-result'],
+    ['https://result.rgpv.ac.in/Result/ProgramSelect.aspx', '/go/all-result'],
+  ]);
+
+  const relayForExternal = (href) => {
+    try {
+      const parsed = new URL(href, window.location.origin);
+      const key = `${parsed.origin}${parsed.pathname}${parsed.search}`;
+      return externalRelays.get(key) || null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const previewRouteFromAnchor = (anchor) => {
+    const href = anchor?.getAttribute?.('href') || '';
+    if (!href.includes('index.php?page=')) return null;
+    const text = (anchor.textContent || '').trim().toLowerCase();
+    let route = new URLSearchParams(href.split('?')[1] || '').get('page') || 'home';
+    if (anchor.classList.contains('nav-upload') || anchor.classList.contains('reference-cta-primary') || text.includes('upload paper')) route = 'upload';
+    else if (anchor.classList.contains('gpcs-signin-btn') || text.includes('gpcs sign in')) route = 'login';
+    return route;
+  };
+
+  const currentRequestedFeature = () => {
+    const params = new URLSearchParams(window.location.search);
+    const page = (params.get('page') || '').toLowerCase();
+    if (['papers','upload','notes','gallery','about','contact'].includes(page)) return `/#${page}`;
+
+    const hash = window.location.hash.replace(/^#/, '').toLowerCase();
+    if (['papers','upload','notes','gallery','about','contact','student-dashboard','faculty-dashboard'].includes(hash)) return `/#${hash}`;
+    return null;
+  };
+
+  const readIntended = () => {
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = safeInternalRedirect(params.get('redirect'));
+    if (fromQuery) return fromQuery;
+    try {
+      return safeInternalRedirect(sessionStorage.getItem(INTENDED_KEY));
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const rememberIntended = (value) => {
+    const safe = safeInternalRedirect(value) || '/';
+    try { sessionStorage.setItem(INTENDED_KEY, safe); } catch (_) {}
+    return safe;
+  };
+
+  const clearIntended = () => {
+    try { sessionStorage.removeItem(INTENDED_KEY); } catch (_) {}
+  };
+
+  const redirectToLogin = (value) => {
+    const safe = rememberIntended(value);
+    const target = `/?auth_required=1&redirect=${encodeURIComponent(safe)}#login`;
+    if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== target) {
+      window.location.assign(target);
+    }
+  };
+
+  let authSnapshot = null;
+  let authPromise = null;
+  const isAuthenticated = async (force = false) => {
+    if (!force && authSnapshot !== null) return authSnapshot;
+    if (!force && authPromise) return authPromise;
+    authPromise = request('/auth/status', {timeoutMs:8000})
+      .then((body) => {
+        authSnapshot = body?.authenticated === true;
+        return authSnapshot;
+      })
+      .catch(() => {
+        authSnapshot = false;
+        return false;
+      })
+      .finally(() => { authPromise = null; });
+    return authPromise;
+  };
+
+  const isPublicAnchor = (anchor) => {
+    if (!anchor || anchor.closest('.logo-interactive')) return true;
+    const href = anchor.getAttribute('href') || '';
+    const route = previewRouteFromAnchor(anchor);
+    const text = (anchor.textContent || '').trim().toLowerCase();
+
+    if (route === 'home') return true;
+    if (route === 'login' && (anchor.classList.contains('gpcs-signin-btn') || text.includes('gpcs sign in') || text === 'sign in')) return true;
+    if (href === '/' || href === '/#home' || href === '#home' || href === '#login' || href === '/#login') return true;
+    return false;
+  };
+
+  const intendedForAnchor = (anchor) => {
+    const route = previewRouteFromAnchor(anchor);
+    if (route && !['home','login'].includes(route)) return `/#${route}`;
+    if (route === 'login' && ((anchor.textContent || '').toLowerCase().includes('upload paper') || anchor.classList.contains('nav-upload'))) return '/#upload';
+
+    const href = anchor.getAttribute('href') || '';
+    const relay = relayForExternal(href);
+    if (relay) return relay;
+
+    try {
+      const parsed = new URL(href, window.location.origin);
+      if (parsed.origin === window.location.origin) return safeInternalRedirect(`${parsed.pathname}${parsed.search}${parsed.hash}`) || '/';
+    } catch (_) {}
+    return '/';
+  };
+
+  const resumeAnchor = (anchor) => {
+    const route = previewRouteFromAnchor(anchor);
+    if (route && route !== 'login') {
+      if (typeof window.gpcsPreviewNavigate === 'function') window.gpcsPreviewNavigate(route);
+      window.setTimeout(() => loadLibraries(), 0);
+      return;
+    }
+
+    const href = anchor.getAttribute('href') || '';
+    try {
+      const parsed = new URL(href, window.location.origin);
+      if (anchor.target === '_blank') {
+        window.open(parsed.toString(), '_blank', 'noopener,noreferrer');
+      } else {
+        window.location.assign(parsed.toString());
+      }
+    } catch (_) {}
   };
 
   const adminForm = document.getElementById('gpcsHiddenAdminForm');
@@ -89,6 +243,19 @@
       else form.querySelector('button[type="submit"]')?.before(remember);
     }
 
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('auth_required') === '1') {
+      const shell = document.querySelector('.auth-preview-shell');
+      if (shell && !shell.querySelector('[data-auth-required-reason]')) {
+        const notice = document.createElement('div');
+        notice.dataset.authRequiredReason = '1';
+        notice.setAttribute('role', 'status');
+        notice.textContent = AUTH_REASON;
+        notice.style.cssText = 'margin:0 auto 16px;padding:11px 14px;max-width:680px;border:1px solid #c9def8;border-radius:13px;background:#eef6ff;color:#174a84;font-weight:800;font-size:.86rem;text-align:center;';
+        shell.prepend(notice);
+      }
+    }
+
     const hash = window.location.hash;
     if (hash !== '#student-dashboard' && hash !== '#faculty-dashboard') return;
 
@@ -101,6 +268,58 @@
       window.requestAnimationFrame(() => dashboard.scrollIntoView({block:'start'}));
     }
   };
+
+  const originalPreviewNavigate = window.gpcsPreviewNavigate;
+  if (typeof originalPreviewNavigate === 'function') {
+    window.gpcsPreviewNavigate = (route, push = true) => {
+      const normalized = String(route || 'home').toLowerCase();
+      if (normalized === 'home' || normalized === 'login') return originalPreviewNavigate(route, push);
+      return isAuthenticated().then((allowed) => {
+        if (!allowed) return redirectToLogin(`/#${normalized}`);
+        const result = originalPreviewNavigate(route, push);
+        window.setTimeout(() => loadLibraries(), 0);
+        return result;
+      });
+    };
+  }
+
+  document.addEventListener('click', async (event) => {
+    const loginTrigger = event.target?.closest?.('[data-gpcs-login-intended]');
+    if (loginTrigger) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      redirectToLogin(loginTrigger.dataset.gpcsLoginIntended || '/');
+      return;
+    }
+
+    const routeButton = event.target?.closest?.('[data-preview-route]');
+    if (routeButton) {
+      const route = String(routeButton.dataset.previewRoute || 'home').toLowerCase();
+      if (!['home','login'].includes(route)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!await isAuthenticated()) {
+          redirectToLogin(`/#${route}`);
+          return;
+        }
+        if (typeof originalPreviewNavigate === 'function') originalPreviewNavigate(route);
+        window.setTimeout(() => loadLibraries(), 0);
+        return;
+      }
+    }
+
+    const anchor = event.target?.closest?.('a[href]');
+    if (!anchor || isPublicAnchor(anchor)) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const intended = intendedForAnchor(anchor);
+    if (!await isAuthenticated()) {
+      redirectToLogin(intended);
+      return;
+    }
+    resumeAnchor(anchor);
+  }, true);
 
   const inputs = (form, selector='input,select,textarea') => [...form.querySelectorAll(selector)].filter(x => !x.disabled);
   const valueByLabel = (form, labelText) => {
@@ -121,6 +340,7 @@
     clearTimeout(lookupTimer);
     lookupTimer=setTimeout(async()=>{
       try{
+        if (!await isAuthenticated()) return;
         const params=new URLSearchParams();
         if(kind==='paper'){
           const mapping=[['Paper Code','paper_code'],['Subject Code','subject_code'],['Paper Name','paper_name'],['Subject Name','subject_name'],['Branch','branch'],['Semester','semester']];
@@ -157,13 +377,30 @@
     const id = form.id;
     if (!['previewStudentPassword','previewFacultyPassword','previewDynamicRegister','previewUploadForm','previewNoteForm','previewContactForm','previewResetForm'].includes(id)) return;
     event.preventDefault(); event.stopImmediatePropagation();
+
+    const protectedDestinations = {
+      previewUploadForm: '/#upload',
+      previewNoteForm: '/#notes',
+      previewContactForm: '/#contact',
+    };
+    if (protectedDestinations[id] && !await isAuthenticated()) {
+      redirectToLogin(protectedDestinations[id]);
+      return;
+    }
+
     const submitter = event.submitter;
     if (submitter instanceof HTMLButtonElement) submitter.disabled = true;
     try {
       if (id === 'previewStudentPassword' || id === 'previewFacultyPassword') {
         const els = inputs(form,'input'); const email=els.find(x=>x.type==='email')?.value||''; const password=els.find(x=>x.type==='password')?.value||'';
         const remember=form.querySelector('input[name="remember"]')?.checked===true;
-        const body=await submitJson(routes.login,{email,password,role:id.includes('Faculty')?'faculty':'student',remember}); toast(body.message); location.href=body.redirect||'/'; return;
+        const redirect=readIntended();
+        const body=await submitJson(routes.login,{email,password,role:id.includes('Faculty')?'faculty':'student',remember,redirect});
+        toast(body.message);
+        authSnapshot=true;
+        clearIntended();
+        location.href=safeInternalRedirect(body.redirect)||'/';
+        return;
       }
       if (id === 'previewDynamicRegister') {
         const role = form.querySelector('[data-faculty-fields]')?.hidden === false ? 'faculty' : 'student';
@@ -176,7 +413,13 @@
         const outer=[...form.querySelectorAll(':scope > label input, :scope > label textarea')];
         const mobile=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===10);const email=outer.find(x=>x.type==='email');const passes=outer.filter(x=>x.type==='password');const pin=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===6);const address=outer.find(x=>x.tagName==='TEXTAREA');const photo=outer.find(x=>x.type==='file');
         if(mobile?.value)fd.set('mobile',mobile.value);fd.set('email',email?.value||'');fd.set('password',passes[0]?.value||'');fd.set('password_confirmation',passes[1]?.value||'');if(pin?.value)fd.set('pin_code',pin.value);fd.set('address',address?.value||'');if(photo?.files?.[0])fd.set('profile_photo',photo.files[0]);
-        const body=await request(routes.register,{method:'POST',body:fd,timeoutMs:45000});toast(body.message);location.href=body.redirect||'/';return;
+        const redirect=readIntended(); if(redirect)fd.set('redirect',redirect);
+        const body=await request(routes.register,{method:'POST',body:fd,timeoutMs:45000});
+        toast(body.message);
+        authSnapshot=true;
+        clearIntended();
+        location.href=safeInternalRedirect(body.redirect)||'/';
+        return;
       }
       if (id === 'previewUploadForm') {
         const fd=new FormData(); const f=fileByLabel(form,'Choose Paper File'); if(!f)throw new Error('Choose a Paper file.');
@@ -193,7 +436,13 @@
       }
       if (id === 'previewContactForm') { const els=inputs(form); const body=await submitJson(routes.contactStore,{name:els[0]?.value||'',contact:els[1]?.value||'',message:els[2]?.value||''});toast(body.message);form.reset();return; }
       if (id === 'previewResetForm') { const email=form.querySelector('input[name="email"]')?.value?.trim() || valueByLabel(form,'Email ID'); if(!email.includes('@'))throw new Error('Enter the registered Email ID.'); const body=await submitJson(routes.forgot,{email});toast(body.message);return; }
-    } catch (e) { toast(e.message || 'Unable to complete the request.'); }
+    } catch (e) {
+      if (e?.code === 'AUTH_REQUIRED') {
+        redirectToLogin(protectedDestinations[id] || currentRequestedFeature() || '/');
+        return;
+      }
+      toast(e.message || 'Unable to complete the request.');
+    }
     finally { if (submitter instanceof HTMLButtonElement) submitter.disabled = false; }
   }, true);
 
@@ -207,7 +456,7 @@
     } catch (_) { return null; }
   };
 
-  const loadDigitalBoard = async () => {
+  const loadDigitalBoard = async (authenticated = null) => {
     const main=document.querySelector('main');
     if(!main || document.getElementById('gpcsDigitalBoard'))return;
     const board=document.createElement('section');
@@ -215,13 +464,24 @@
     board.innerHTML='<div class="gpcs-digital-board-head"><h2>Digital Board</h2><span>Latest college notices</span></div><div class="gpcs-digital-board-list"><div class="gpcs-digital-board-empty">Loading notices…</div></div>';
     main.prepend(board);
     const list=board.querySelector('.gpcs-digital-board-list');
+
+    const allowed = authenticated === null ? await isAuthenticated() : authenticated;
+    if (!allowed) {
+      list.innerHTML=`<button type="button" class="gpcs-digital-board-empty" data-gpcs-login-intended="/#home" style="width:100%;cursor:pointer">${AUTH_REASON}</button>`;
+      return;
+    }
+
     try{
       const rows=await request('/api/notifications',{timeoutMs:12000});
       list.innerHTML=rows.length?rows.map(n=>{const href=safeHref(n.link);const tag=href?'a':'div';const attrs=href?` href="${escapeHtml(href)}"${href.startsWith('https://')?' target="_blank" rel="noopener noreferrer"':''}`:'';const date=n.published_at?new Date(n.published_at).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'}):'';return `<${tag} class="gpcs-digital-board-card"${attrs}><strong>${escapeHtml(n.title||'Notice')}</strong><p>${escapeHtml(n.message||'')}</p>${date?`<time>${escapeHtml(date)}</time>`:''}</${tag}>`;}).join(''):'<div class="gpcs-digital-board-empty">No notices are available right now.</div>';
-    }catch(_){list.innerHTML='<div class="gpcs-digital-board-empty">Notices are temporarily unavailable. Please try again later.</div>';}
+    }catch(e){
+      if(e?.code==='AUTH_REQUIRED'){redirectToLogin('/#home');return;}
+      list.innerHTML='<div class="gpcs-digital-board-empty">Notices are temporarily unavailable. Please try again later.</div>';
+    }
   };
 
   const loadLibraries = async () => {
+    if (!await isAuthenticated()) return;
     const paperRows=document.getElementById('previewPaperRows');
     if(paperRows && paperRows.dataset.liveLoaded!=='1'){
       paperRows.dataset.liveLoaded='1';
@@ -239,9 +499,22 @@
     }
   };
 
-  const initializePortalBridge = () => {
+  const initializePortalBridge = async () => {
     ensureLoginEnhancements();
-    loadDigitalBoard();
+    const authenticated = await isAuthenticated();
+
+    if (!authenticated) {
+      const directFeature = currentRequestedFeature();
+      const params = new URLSearchParams(window.location.search);
+      if (directFeature && params.get('auth_required') !== '1') {
+        redirectToLogin(directFeature);
+        return;
+      }
+      if (window.location.hash !== '#login') loadDigitalBoard(false);
+      return;
+    }
+
+    loadDigitalBoard(true);
     const runLibraries = () => loadLibraries();
     if ('requestIdleCallback' in window) window.requestIdleCallback(runLibraries,{timeout:1400});
     else window.setTimeout(runLibraries,120);
@@ -253,8 +526,13 @@
   document.addEventListener('change', async (event) => {
     if (event.target?.id !== 'previewGalleryInput') return;
     event.stopImmediatePropagation();
+    if (!await isAuthenticated()) {
+      event.target.value='';
+      redirectToLogin('/#gallery');
+      return;
+    }
     const files=[...event.target.files]; if(!files.length)return;
-    for(const file of files){const fd=new FormData();fd.set('image',file);fd.set('category','Other College Related');try{const body=await request(routes.galleryStore,{method:'POST',body:fd,timeoutMs:120000});toast(body.message);}catch(e){toast(e.message);break;}}
+    for(const file of files){const fd=new FormData();fd.set('image',file);fd.set('category','Other College Related');try{const body=await request(routes.galleryStore,{method:'POST',body:fd,timeoutMs:120000});toast(body.message);}catch(e){if(e?.code==='AUTH_REQUIRED'){redirectToLogin('/#gallery');return;}toast(e.message);break;}}
     event.target.value='';
   }, true);
 })();

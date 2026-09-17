@@ -4,6 +4,7 @@ use App\Http\Middleware\AdminIdleTimeout;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsurePortalAccountActive;
 use App\Http\Middleware\SecurityHeaders;
+use App\Support\SafePortalRedirect;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,10 +27,19 @@ return Application::configure(basePath: dirname(__DIR__))
                 Request::HEADER_X_FORWARDED_PREFIX
         );
 
-        // This portal uses a modal/section login instead of a GET /login route.
-        // Explicit guest redirection prevents protected web routes from trying
-        // to resolve a missing named "login" route.
-        $middleware->redirectGuestsTo('/#login');
+        // The public landing page contains the portal sign-in UI. When a guest
+        // reaches a protected browser route, remember only a sanitized local
+        // path and send them to that sign-in UI. JSON/API requests still receive
+        // Laravel's normal unauthenticated JSON response.
+        $middleware->redirectGuestsTo(function (Request $request): string {
+            $intended = SafePortalRedirect::sanitize($request->getRequestUri(), '/');
+
+            if ($request->hasSession()) {
+                $request->session()->put('url.intended', $intended);
+            }
+
+            return SafePortalRedirect::loginUrl($intended);
+        });
 
         $middleware->append(SecurityHeaders::class);
 
@@ -48,6 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $request->expectsJson()
                 || $request->is('api/*')
                 || $request->is('metadata/*')
+                || $request->is('auth/status')
         );
     })
     ->create();

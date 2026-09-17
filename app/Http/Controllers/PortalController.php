@@ -8,17 +8,20 @@ use App\Models\Paper;
 use App\Models\PortalNotification;
 use App\Models\SubjectMaster;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class PortalController extends Controller
 {
     public function index()
     {
-        return view('portal', [
+        $counts = Cache::remember('portal.home.counts', now()->addMinutes(5), static fn (): array => [
             'paperCount' => Paper::where('status', 'approved')->count(),
             'noteCount' => Note::where('status', 'approved')->count(),
             'galleryCount' => GalleryImage::where('status', 'approved')->count(),
             'subjectCount' => SubjectMaster::count(),
         ]);
+
+        return view('portal', $counts);
     }
 
     public function notifications(Request $request)

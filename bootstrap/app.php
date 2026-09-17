@@ -1,4 +1,4 @@
- <?php
+<?php
 
 use App\Http\Middleware\AdminIdleTimeout;
 use App\Http\Middleware\EnsureAdmin;
@@ -15,20 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Railway / Cloud Proxy Trust
-        |--------------------------------------------------------------------------
-        |
-        | Railway terminates HTTPS before forwarding the request to Laravel.
-        | Trusting the forwarded headers allows Laravel to correctly recognise
-        | HTTPS, the original host, and the original request scheme.
-        |
-        | This is important for secure session cookies and CSRF protection.
-        |
-        */
-
         $middleware->trustProxies(
             at: '*',
             headers:
@@ -39,12 +25,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 Request::HEADER_X_FORWARDED_PREFIX
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Application Middleware Aliases
-        |--------------------------------------------------------------------------
-        */
-
         $middleware->alias([
             'admin' => EnsureAdmin::class,
             'admin.idle' => AdminIdleTimeout::class,
@@ -52,9 +32,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        /*
-         * Laravel's normal production exception handling is used.
-         * Keep APP_DEBUG=false on Railway.
-         */
+        // Use Laravel's normal production exception handling.
     })
     ->create();

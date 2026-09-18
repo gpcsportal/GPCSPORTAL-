@@ -1,4 +1,6 @@
 /* GPCS Portal audit hardening: responsive, accessibility, print, digital board */
+.gpcs-skip-link{position:fixed;z-index:100000;top:8px;left:8px;transform:translateY(-150%);padding:10px 14px;border-radius:9px;background:#0a2558;color:#fff;font-weight:800;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.gpcs-skip-link:focus{transform:translateY(0)}
 :focus-visible{outline:3px solid #2563eb;outline-offset:3px}
 button,a,input,select,textarea{min-height:44px}
 input,select,textarea{font-size:16px}
@@ -82,4 +84,10 @@ a.gpcs-digital-board-card::after{content:"↗";position:absolute;top:14px;right:
   body{background:#fff!important;color:#000!important}
   main,.container,.route-content,.route-card{width:100%!important;max-width:none!important;box-shadow:none!important;border:0!important}
   a{color:#000!important;text-decoration:underline}
+}
+
+
+@media(forced-colors:active){
+  .gpcs-skip-link,.route-btn,.btn,button,.gpcs-digital-board-card{border:1px solid ButtonText}
+  :focus-visible{outline:2px solid Highlight!important;outline-offset:3px}
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GalleryImage;
 use App\Services\FileCompressionService;
+use App\Services\UploadStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -27,7 +28,11 @@ class GalleryController extends Controller
         );
     }
 
-    public function store(Request $request, FileCompressionService $images)
+    public function store(
+        Request $request,
+        FileCompressionService $images,
+        UploadStorageService $storageCapacity
+    )
     {
         $maxKilobytes = config('gpcs_uploads.gallery_max_mb', 20) * 1024;
 
@@ -45,6 +50,12 @@ class GalleryController extends Controller
             return response()->json([
                 'message' => 'The selected image could not be read. Please choose it again.',
             ], 422);
+        }
+
+        if (! $storageCapacity->hasCapacityFor((int) $file->getSize())) {
+            return response()->json([
+                'message' => 'Upload storage is nearly full. Please contact the Admin before uploading this image.',
+            ], 507);
         }
 
         try {

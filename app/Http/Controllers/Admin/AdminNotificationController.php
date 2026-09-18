@@ -41,11 +41,15 @@ class AdminNotificationController extends Controller
                     $link = trim((string) $value);
 
                     if (str_starts_with($link, '/')) {
+                        if (str_starts_with($link, '//') || str_contains($link, '\\')) {
+                            $fail('The notice link must be a safe portal path or a valid HTTPS URL.');
+                        }
+
                         return;
                     }
 
                     if (! filter_var($link, FILTER_VALIDATE_URL) || ! str_starts_with(strtolower($link), 'https://')) {
-                        $fail('The notice link must be a relative portal path or a valid HTTPS URL.');
+                        $fail('The notice link must be a safe portal path or a valid HTTPS URL.');
                     }
                 },
             ],

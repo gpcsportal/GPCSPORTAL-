@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Services\PortalSettingsService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreNoteUploadRequest extends FormRequest
 {
@@ -13,11 +15,12 @@ class StoreNoteUploadRequest extends FormRequest
 
     public function rules(): array
     {
-        $maxMb = (int) config('gpcs_uploads.notes_max_mb', 200);
+        $settings = app(PortalSettingsService::class);
+        $maxMb = $settings->notesMaxMb();
         $maxKb = $maxMb * 1024;
 
         return [
-            'branch' => ['required', 'in:CS,ME,EE,ET'],
+            'branch' => ['required', Rule::in($settings->branches())],
             'semester' => ['required', 'regex:/^(?:Semester )?(?:I|II|III|IV|V|VI)$/'],
             'year' => ['required', 'integer', 'between:2000,2100'],
             'subject_name' => ['required', 'string', 'max:255'],
@@ -30,7 +33,7 @@ class StoreNoteUploadRequest extends FormRequest
 
     public function messages(): array
     {
-        $maxMb = (int) config('gpcs_uploads.notes_max_mb', 200);
+        $maxMb = app(PortalSettingsService::class)->notesMaxMb();
 
         return [
             'attachment.file' => 'The selected Notes attachment is invalid.',

@@ -192,8 +192,14 @@ class AdminControlAuditTest extends TestCase
 
         $this->assertSame('QUALITY ASSURANCE UPDATED', $subject->fresh()->subject_name);
 
+        $this->seed(\\Database\\Seeders\\SubjectMasterSeeder::class);
+        $this->assertSame('QUALITY ASSURANCE UPDATED', $subject->fresh()->subject_name);
+
         $this->delete(route('admin.subjects.destroy', $subject))
             ->assertSessionHas('status');
+        $this->assertDatabaseMissing('subject_masters', ['id' => $subject->id]);
+
+        $this->seed(\\Database\\Seeders\\SubjectMasterSeeder::class);
         $this->assertDatabaseMissing('subject_masters', ['id' => $subject->id]);
     }
 

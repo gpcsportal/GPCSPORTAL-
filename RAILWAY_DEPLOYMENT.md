@@ -65,15 +65,17 @@ Paper, Notes, Gallery, and profile files use Laravel's `public` filesystem disk.
 
 Do not move this mount without migrating existing uploaded files first.
 
-## Public storage link
+## Protected upload storage
 
-If a fresh environment does not already expose `public/storage`, run this once in that running environment:
+Do **not** run `php artisan storage:link` for this portal. Paper, Notes, Gallery and profile uploads are intentionally delivered through authenticated Laravel routes so the login wall cannot be bypassed with a direct `/storage/...` URL.
 
-```bash
-php artisan storage:link
+The persistent Railway volume still mounts at:
+
+```text
+/app/storage/app/public
 ```
 
-The link itself is deployment-filesystem state and should not be mixed into the database migration pre-deploy command.
+The directory name is retained for compatibility with the existing application and volume, but it must not be symlinked into `public/storage`.
 
 ## Logging
 

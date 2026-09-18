@@ -7,21 +7,27 @@ $mysqlOptions = static function (): array {
         return [];
     }
 
+    // Keep PDO connections request-scoped instead of using PHP persistent
+    // sockets. Laravel/FrankenPHP may reuse the application worker, while PDO
+    // and the framework safely manage the live connection lifecycle.
+    $options = [
+        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::ATTR_PERSISTENT => false,
+    ];
+
     $sslCa = env('MYSQL_ATTR_SSL_CA');
 
     if (! is_string($sslCa) || trim($sslCa) === '') {
-        return [];
+        return $options;
     }
 
     $sslCaConstant = 'PDO::MYSQL_ATTR_SSL_CA';
 
-    if (! defined($sslCaConstant)) {
-        return [];
+    if (defined($sslCaConstant)) {
+        $options[constant($sslCaConstant)] = $sslCa;
     }
 
-    return [
-        constant($sslCaConstant) => $sslCa,
-    ];
+    return $options;
 };
 
 return [

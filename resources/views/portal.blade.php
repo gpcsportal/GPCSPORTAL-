@@ -6,8 +6,16 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <meta content="#0a2558" name="theme-color"/>
+<meta content="light dark" name="color-scheme"/>
+<meta content="GPCS Portal" name="application-name"/>
+<meta content="index,follow" name="robots"/>
 <meta content="Government Polytechnic College, Shivpuri academic resource portal for papers, notes, results and college resources." name="description"/>
-<link href="/assets/gpcs-embedded-0e591692ad23.webp" rel="icon" type="image/webp"/>
+<meta content="GPCS Portal — Government Polytechnic College Shivpuri" property="og:title"/>
+<meta content="Government Polytechnic College, Shivpuri academic resource portal for papers, notes, results and college resources." property="og:description"/>
+<meta content="website" property="og:type"/>
+<meta content="{{ url('/') }}" property="og:url"/>
+<link href="{{ url('/') }}" rel="canonical"/>
+<link href="/favicon.svg" rel="icon" type="image/svg+xml"/>
 <title>Home — GPCS Portal</title>
 <style>:root{
   --navy-950:#06142f;

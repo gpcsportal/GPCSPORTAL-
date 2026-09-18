@@ -29,6 +29,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Guard tracked secrets
+        shell: bash
+        run: |
+          if git ls-files | grep -Eq '(^|/)\.env$|(^|/)\.env\.(local|production|prod|staging|development)$'; then
+            echo "A real environment file is tracked. Remove it from Git before deploying."
+            exit 1
+          fi
+          if git ls-files | grep -Eq '(^|/)(id_rsa|id_ed25519|[^/]+\.(pem|p12|pfx|key))$'; then
+            echo "A private key-like file is tracked. Store credentials in Railway variables instead."
+            exit 1
+          fi
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:

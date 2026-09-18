@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0a2558">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <title>Page Not Found — GPCS Portal</title>
 <style>
@@ -13,8 +14,8 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font
 <body>
 <main class="box">
 <div class="code">404</div>
-<h1>Page not found</h1>
-<p>The page you requested is unavailable or may have moved. Return to the GPCS Portal home page and continue from there.</p>
+<h1>Page not found <span aria-hidden="true">/</span> पेज नहीं मिला</h1>
+<p>The requested page is unavailable or may have moved. Return to the public GPCS Portal home page and continue from there.</p>
 <a class="btn" href="{{ route('portal.home') }}">Back to GPCS Portal</a>
 </main>
 </body>

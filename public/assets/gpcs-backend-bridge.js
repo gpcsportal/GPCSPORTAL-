@@ -17,6 +17,30 @@
   ensureStylesheet('/assets/gpcs-audit-fixes.css', 'gpcs-audit-fixes');
   ensureStylesheet('/assets/gpcs-responsive.css', 'gpcs-responsive');
 
+  const ensureAccessibilityShell = () => {
+    const main = document.querySelector('main');
+    if (!main) return;
+
+    if (!main.id) main.id = 'main-content';
+
+    if (!document.querySelector('.gpcs-skip-link')) {
+      const skip = document.createElement('a');
+      skip.className = 'gpcs-skip-link';
+      skip.href = '#main-content';
+      skip.textContent = 'Skip to main content';
+      document.body.prepend(skip);
+    }
+  };
+
+  const syncNavCurrent = () => {
+    document.querySelectorAll('.main-nav a[aria-current="page"]').forEach((link) => {
+      link.removeAttribute('aria-current');
+    });
+    document.querySelectorAll('.main-nav a.active').forEach((link) => {
+      link.setAttribute('aria-current', 'page');
+    });
+  };
+
   const normalizeRequestUrl = (value) => {
     if (!value) return value;
     try {
@@ -211,6 +235,7 @@
     const route = previewRouteFromAnchor(anchor);
     if (route && route !== 'login') {
       if (typeof window.gpcsPreviewNavigate === 'function') window.gpcsPreviewNavigate(route);
+      syncNavCurrent();
       window.setTimeout(() => loadLibraries(), 0);
       return;
     }
@@ -277,6 +302,7 @@
       return isAuthenticated().then((allowed) => {
         if (!allowed) return redirectToLogin(`/#${normalized}`);
         const result = originalPreviewNavigate(route, push);
+        syncNavCurrent();
         window.setTimeout(() => loadLibraries(), 0);
         return result;
       });
@@ -303,13 +329,18 @@
           return;
         }
         if (typeof originalPreviewNavigate === 'function') originalPreviewNavigate(route);
+        syncNavCurrent();
         window.setTimeout(() => loadLibraries(), 0);
         return;
       }
     }
 
     const anchor = event.target?.closest?.('a[href]');
-    if (!anchor || isPublicAnchor(anchor)) return;
+    if (!anchor) return;
+    if (isPublicAnchor(anchor)) {
+      window.setTimeout(syncNavCurrent, 0);
+      return;
+    }
 
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -461,22 +492,25 @@
     if(!main || document.getElementById('gpcsDigitalBoard'))return;
     const board=document.createElement('section');
     board.id='gpcsDigitalBoard';board.className='gpcs-digital-board';board.setAttribute('aria-live','polite');
-    board.innerHTML='<div class="gpcs-digital-board-head"><h2>Digital Board</h2><span>Latest college notices</span></div><div class="gpcs-digital-board-list"><div class="gpcs-digital-board-empty">Loading notices…</div></div>';
+    board.innerHTML='<div class="gpcs-digital-board-head"><h2>Digital Board</h2><span>Latest college notices</span></div><div class="gpcs-digital-board-list" role="status" aria-busy="true"><div class="gpcs-digital-board-empty">Loading notices…</div></div>';
     main.prepend(board);
     const list=board.querySelector('.gpcs-digital-board-list');
 
     const allowed = authenticated === null ? await isAuthenticated() : authenticated;
     if (!allowed) {
       list.innerHTML=`<button type="button" class="gpcs-digital-board-empty" data-gpcs-login-intended="/#home" style="width:100%;cursor:pointer">${AUTH_REASON}</button>`;
+      list.setAttribute('aria-busy', 'false');
       return;
     }
 
     try{
       const rows=await request('/api/notifications',{timeoutMs:12000});
       list.innerHTML=rows.length?rows.map(n=>{const href=safeHref(n.link);const tag=href?'a':'div';const attrs=href?` href="${escapeHtml(href)}"${href.startsWith('https://')?' target="_blank" rel="noopener noreferrer"':''}`:'';const date=n.published_at?new Date(n.published_at).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'}):'';return `<${tag} class="gpcs-digital-board-card"${attrs}><strong>${escapeHtml(n.title||'Notice')}</strong><p>${escapeHtml(n.message||'')}</p>${date?`<time>${escapeHtml(date)}</time>`:''}</${tag}>`;}).join(''):'<div class="gpcs-digital-board-empty">No notices are available right now.</div>';
+      list.setAttribute('aria-busy', 'false');
     }catch(e){
       if(e?.code==='AUTH_REQUIRED'){redirectToLogin('/#home');return;}
       list.innerHTML='<div class="gpcs-digital-board-empty">Notices are temporarily unavailable. Please try again later.</div>';
+      list.setAttribute('aria-busy', 'false');
     }
   };
 
@@ -500,6 +534,8 @@
   };
 
   const initializePortalBridge = async () => {
+    ensureAccessibilityShell();
+    syncNavCurrent();
     ensureLoginEnhancements();
     const authenticated = await isAuthenticated();
 
@@ -522,6 +558,8 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initializePortalBridge, {once:true});
   else initializePortalBridge();
+
+  window.addEventListener('hashchange', () => window.setTimeout(syncNavCurrent, 0));
 
   document.addEventListener('change', async (event) => {
     if (event.target?.id !== 'previewGalleryInput') return;

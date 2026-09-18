@@ -444,6 +444,7 @@
         const outer=[...form.querySelectorAll(':scope > label input, :scope > label textarea')];
         const mobile=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===10);const email=outer.find(x=>x.type==='email');const passes=outer.filter(x=>x.type==='password');const pin=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===6);const address=outer.find(x=>x.tagName==='TEXTAREA');const photo=outer.find(x=>x.type==='file');
         if(mobile?.value)fd.set('mobile',mobile.value);fd.set('email',email?.value||'');fd.set('password',passes[0]?.value||'');fd.set('password_confirmation',passes[1]?.value||'');if(pin?.value)fd.set('pin_code',pin.value);fd.set('address',address?.value||'');if(photo?.files?.[0])fd.set('profile_photo',photo.files[0]);
+        const terms=form.querySelector('input[name="terms_accepted"]');if(terms?.checked)fd.set('terms_accepted','1');
         const redirect=readIntended(); if(redirect)fd.set('redirect',redirect);
         const body=await request(routes.register,{method:'POST',body:fd,timeoutMs:45000});
         toast(body.message);

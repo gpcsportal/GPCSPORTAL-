@@ -75,6 +75,7 @@ class PortalAuthController extends Controller
             'pin_code' => 'nullable|digits:6',
             'profile_photo' => 'nullable|image|max:5120',
             'redirect' => ['nullable', 'string', 'max:2048'],
+            'terms_accepted' => ['required', 'accepted'],
         ];
 
         if ($role === 'student') {
@@ -92,7 +93,7 @@ class PortalAuthController extends Controller
 
         $validated = $request->validate($rules);
         $requestedRedirect = $validated['redirect'] ?? null;
-        unset($validated['redirect']);
+        unset($validated['redirect'], $validated['terms_accepted']);
 
         $photo = null;
         $profileFile = $request->file('profile_photo');

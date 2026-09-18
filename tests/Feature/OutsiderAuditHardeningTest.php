@@ -31,6 +31,32 @@ class OutsiderAuditHardeningTest extends TestCase
             ->assertSee(route('portal.privacy', absolute: false), false);
     }
 
+    public function test_registration_requires_terms_consent_server_side(): void
+    {
+        $payload = [
+            'role' => 'student',
+            'name' => 'Consent',
+            'surname' => 'Tester',
+            'gender' => 'Male',
+            'college_name' => 'Government Polytechnic College Shivpuri',
+            'email' => 'consent@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'address' => 'Shivpuri',
+            'college_year' => 'First Year',
+            'branch' => 'CS',
+            'semester' => 'I',
+        ];
+
+        $this->postJson('/register', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('terms_accepted');
+
+        $this->postJson('/register', $payload + ['terms_accepted' => '1'])
+            ->assertCreated()
+            ->assertJson(['role' => 'student']);
+    }
+
     public function test_password_reset_request_sends_reset_notification_without_revealing_account_existence(): void
     {
         Notification::fake();

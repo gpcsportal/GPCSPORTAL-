@@ -88,6 +88,7 @@ class AuthGateReturnTest extends TestCase
             'branch' => 'CS',
             'semester' => 'I',
             'redirect' => '/#papers',
+            'terms_accepted' => '1',
         ]);
 
         $response->assertCreated()->assertJson([
@@ -117,6 +118,7 @@ class AuthGateReturnTest extends TestCase
             'subject_department' => 'Computer Science',
             'employee_id' => 'FAC-001',
             'redirect' => '/#gallery',
+            'terms_accepted' => '1',
         ]);
 
         $response->assertCreated()->assertJson([

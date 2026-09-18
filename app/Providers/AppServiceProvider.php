@@ -8,6 +8,7 @@ use App\Observers\AdminNoteObserver;
 use App\Observers\AdminPaperObserver;
 use App\Observers\NoteObserver;
 use App\Observers\PaperObserver;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Surface accidental N+1 relationship access during local development
+        // and CI without risking production request failures.
+        Model::preventLazyLoading(! $this->app->isProduction());
+
         if ($this->app->environment('production')) {
             $origin = rtrim((string) config('app.url', ''), '/');
 

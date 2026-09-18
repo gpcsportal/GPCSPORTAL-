@@ -40,12 +40,14 @@ class SecurityHeaders
         }
 
         if (
-            str_starts_with($request->path(), 'api/')
+            $request->user() !== null
+            || str_starts_with($request->path(), 'api/')
             || str_starts_with($request->path(), 'metadata/')
             || str_starts_with($request->path(), 'auth/')
             || str_starts_with($request->path(), 'admin')
         ) {
             $response->headers->set('Cache-Control', 'no-store, private');
+            $response->headers->set('Pragma', 'no-cache');
         }
 
         return $response;

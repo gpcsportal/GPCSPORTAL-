@@ -233,8 +233,7 @@ textarea{resize:vertical}input::placeholder,textarea::placeholder{color:#9aa6ba}
 .mobile-bottom-nav svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .mobile-bottom-nav .upload-main{background:linear-gradient(135deg,var(--navy-900),var(--blue-600));color:#fff;box-shadow:0 8px 18px rgba(37,99,235,.22)}
 
-/* Chunk uploader */
-.upload-progress{margin-top:14px;width:100%}.upload-progress[hidden]{display:none!important}.upload-progress-bar{height:9px;border-radius:999px;background:rgba(8,27,63,.09);overflow:hidden;border:1px solid rgba(8,27,63,.07)}.upload-progress-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue-600),var(--sky-500));border-radius:inherit;transition:width .18s ease}.upload-progress small{display:block;margin-top:7px;font-weight:750;color:#52627b}button:disabled{opacity:.65;cursor:not-allowed}
+button:disabled{opacity:.65;cursor:not-allowed}
 
 /* Responsive */
 @media(max-width:1100px){
@@ -1039,8 +1038,6 @@ html[data-theme="dark"] .upload-zone small{color:#91c4ff}
 html[data-theme="dark"] .upload-icon{background:linear-gradient(145deg,#12366f,#2563eb);color:#fff}
 html[data-theme="dark"] .auto-badge{background:#0c2b24;color:#7cebc1;border-color:#26604e}
 html[data-theme="dark"] .info-box{background:#102640;border-color:#31577f;border-left-color:#69a8ff;color:#d7e4f5}
-html[data-theme="dark"] .upload-progress-bar{background:#071421;border-color:#29425e}
-html[data-theme="dark"] .upload-progress small{color:#b6c7dc}
 
 /* Auth, filters, chips, pagination and selectable controls. */
 html[data-theme="dark"] .auth-tabs{background:#0b192c;border-color:#2d4666}
@@ -3453,7 +3450,7 @@ html[data-theme="dark"] .reference-signin{
 </div>
 </div>
 <div class="reference-footer-bottom">
-<p>© 2026 GPCS Portal <span>•</span> Government Polytechnic College, Shivpuri <span>•</span> All Rights Reserved</p>
+<p>© 2026 GPCS Portal <span>•</span> Government Polytechnic College, Shivpuri <span>•</span> All Rights Reserved <span>•</span> <a href="{{ route('portal.terms') }}" data-gpcs-public-link>Terms</a> <span>•</span> <a href="{{ route('portal.privacy') }}" data-gpcs-public-link>Privacy</a></p>
 <p>Designed for a fast, student-friendly academic experience.</p>
 </div>
 </div>
@@ -3560,8 +3557,6 @@ html[data-theme="dark"] .reference-signin{
 })();
 
 (() => {
-  const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
-
   const menuBtn = document.querySelector('[data-menu]');
   const nav = document.querySelector('[data-nav]');
   if (menuBtn && nav) {
@@ -4331,7 +4326,7 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
       <div class="auth-role-selector-wrap"><button class="auth-role-selector" type="button" data-auth-preview-toggle aria-label="Student selected. Switch to Faculty"><span class="auth-role-icon" aria-hidden="true"><svg class="auth-role-svg auth-role-svg-student" viewBox="0 0 24 24"><path d="M3 10.2 12 5l9 5.2-9 5.2L3 10.2Z"></path><path d="M7 12.5v4.1c2.9 2 7.1 2 10 0v-4.1"></path><path d="M21 10.2v5"></path></svg><svg class="auth-role-svg auth-role-svg-faculty" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 19c.7-3.6 3.2-5.6 6.5-5.6s5.8 2 6.5 5.6"></path><path d="M18.5 5.2 21 6.7l-2.5 1.5"></path></svg></span><span class="auth-role-copy"><small data-auth-role-context>Sign in as</small><strong data-auth-toggle-state>Student</strong></span><span class="auth-role-action"><span data-auth-toggle-hint>Change to Faculty</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"></path></svg></span></button></div>
       <div class="auth-preview-role" data-auth-preview-panel="student"><div class="route-card auth-glass-card auth-signin-card"><div class="auth-preview-head"><span class="route-status approved">Student</span><h2>Student Sign In</h2><p>Sign in with your Email ID and Password.</p></div><div data-auth-method-panel="password"><form class="route-form" id="previewStudentPassword"><label>Email ID<input type="email" required placeholder="student@example.com"></label><label>Password<input type="password" required minlength="8" placeholder="GPCS account password"></label><div class="auth-preview-linkrow"><button type="button" class="link-button" data-auth-reset="student">Forgot Password?</button></div><button class="route-btn primary auth-main-submit" type="submit">Student Sign In</button></form></div><p class="auth-preview-register">New user? <button type="button" class="link-button" data-auth-register="student">Register here</button></p><div class="auth-trust-row" aria-label="Secure sign in"><span>Secure access</span><span>Password protected</span><span>Responsive</span></div></div></div>
       <div class="auth-preview-role" data-auth-preview-panel="faculty" hidden><div class="route-card auth-glass-card auth-signin-card"><div class="auth-preview-head"><span class="route-status pending">Faculty</span><h2>Faculty Sign In</h2><p>Sign in with your Email ID and Password.</p></div><div data-auth-method-panel="password"><form class="route-form" id="previewFacultyPassword"><label>Email ID<input type="email" required placeholder="faculty@example.com"></label><label>Password<input type="password" required minlength="8" placeholder="GPCS account password"></label><div class="auth-preview-linkrow"><button type="button" class="link-button" data-auth-reset="faculty">Forgot Password?</button></div><button class="route-btn primary auth-main-submit" type="submit">Faculty Sign In</button></form></div><p class="auth-preview-register">New user? <button type="button" class="link-button" data-auth-register="faculty">Register here</button></p><div class="auth-trust-row" aria-label="Secure sign in"><span>Secure access</span><span>Password protected</span><span>Responsive</span></div></div></div>
-      <div class="auth-preview-register-panel" data-register-panel hidden><div class="route-card auth-glass-card auth-register-card"><div class="auth-preview-head"><span class="route-status" data-register-role-badge>Student</span><h2 data-register-title>Student Registration</h2><p>Complete the required account details below.</p></div><form class="route-form auth-preview-registration" id="previewDynamicRegister"><div data-student-fields><label>Full Name<input required></label><label>Surname<input required></label><label>Gender<select required><option>Select</option><option>Male</option><option>Female</option><option>Other</option></select></label><label>College Name<input required></label><label>College Year<select required><option>1st Year</option><option>2nd Year</option><option>3rd Year</option></select></label><label>Branch<select required><option>CS</option><option>ME</option><option>EE</option><option>ET</option></select></label><label>Semester<select required><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option><option>VI</option></select></label></div><div data-faculty-fields hidden><label>Full Name <span class="auth-field-required">Required</span><input required></label><label>Surname <span class="auth-field-required">Required</span><input required></label><label>Gender <span class="auth-field-required">Required</span><select required><option>Select</option><option>Male</option><option>Female</option><option>Other</option></select></label><label>College Name <span class="auth-field-required">Required</span><input required></label><label>Subject Name <span class="auth-field-required">Required</span><input required></label><label>Faculty / Employee ID <span class="auth-field-optional">Optional</span><input></label></div><label>Mobile Number <span class="auth-field-optional" data-faculty-optional-note hidden>Optional</span><input inputmode="numeric" maxlength="10" required data-faculty-optional></label><label>Email ID <span class="auth-field-required">Required</span><input type="email" required></label><label>Email Password <small>(GPCS account login)</small> <span class="auth-field-required">Required</span><input type="password" minlength="8" required></label><label>Confirm Password <span class="auth-field-required">Required</span><input type="password" minlength="8" required></label><label>Pin Code <span class="auth-field-optional" data-faculty-optional-note hidden>Optional</span><input inputmode="numeric" maxlength="6" required data-faculty-optional></label><label>Address <span class="auth-field-required" data-faculty-required-note hidden>Required</span><textarea rows="3" required></textarea></label><label data-profile-photo>Profile Photo <span class="auth-field-optional">Optional</span><input type="file" accept="image/*"></label><label class="auth-preview-check"><input type="checkbox" name="terms_accepted" value="1" required> <span>I agree to <a href="{{ route('portal.terms') }}" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a> and <a href="{{ route('portal.privacy') }}" target="_blank" rel="noopener noreferrer">Privacy Policy</a></span></label><div class="route-actions"><button class="route-btn primary" type="submit" data-register-submit>Create Account</button><button class="route-btn" type="button" data-back-login>Back to Sign In</button></div></form></div></div>
+      <div class="auth-preview-register-panel" data-register-panel hidden><div class="route-card auth-glass-card auth-register-card"><div class="auth-preview-head"><span class="route-status" data-register-role-badge>Student</span><h2 data-register-title>Student Registration</h2><p>Complete the required account details below.</p></div><form class="route-form auth-preview-registration" id="previewDynamicRegister"><div data-student-fields><label>Full Name<input required></label><label>Surname<input required></label><label>Gender<select required><option>Select</option><option>Male</option><option>Female</option><option>Other</option></select></label><label>College Name<input required></label><label>College Year<select required><option>1st Year</option><option>2nd Year</option><option>3rd Year</option></select></label><label>Branch<select required><option>CS</option><option>ME</option><option>EE</option><option>ET</option></select></label><label>Semester<select required><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option><option>VI</option></select></label></div><div data-faculty-fields hidden><label>Full Name <span class="auth-field-required">Required</span><input required></label><label>Surname <span class="auth-field-required">Required</span><input required></label><label>Gender <span class="auth-field-required">Required</span><select required><option>Select</option><option>Male</option><option>Female</option><option>Other</option></select></label><label>College Name <span class="auth-field-required">Required</span><input required></label><label>Subject Name <span class="auth-field-required">Required</span><input required></label><label>Faculty / Employee ID <span class="auth-field-optional">Optional</span><input></label></div><label>Mobile Number <span class="auth-field-optional" data-faculty-optional-note hidden>Optional</span><input inputmode="numeric" maxlength="10" required data-faculty-optional></label><label>Email ID <span class="auth-field-required">Required</span><input type="email" required></label><label>Email Password <small>(GPCS account login)</small> <span class="auth-field-required">Required</span><input type="password" minlength="8" required></label><label>Confirm Password <span class="auth-field-required">Required</span><input type="password" minlength="8" required></label><label>Pin Code <span class="auth-field-optional" data-faculty-optional-note hidden>Optional</span><input inputmode="numeric" maxlength="6" required data-faculty-optional></label><label>Address <span class="auth-field-required" data-faculty-required-note hidden>Required</span><textarea rows="3" required></textarea></label><label data-profile-photo>Profile Photo <span class="auth-field-optional">Optional</span><input type="file" accept="image/*"></label><label class="auth-preview-check"><input type="checkbox" name="terms_accepted" value="1" required> <span>I agree to <a href="{{ route('portal.terms') }}" target="_blank" rel="noopener noreferrer" data-gpcs-public-link>Terms &amp; Conditions</a> and <a href="{{ route('portal.privacy') }}" target="_blank" rel="noopener noreferrer" data-gpcs-public-link>Privacy Policy</a></span></label><div class="route-actions"><button class="route-btn primary" type="submit" data-register-submit>Create Account</button><button class="route-btn" type="button" data-back-login>Back to Sign In</button></div></form></div></div>
       <div class="auth-preview-reset-panel" data-reset-panel hidden><div class="route-card auth-glass-card auth-reset-card"><h2>Forgot Password</h2><p>Enter your registered Email ID. We will send a secure reset link.</p><form class="route-form" id="previewResetForm"><label>Email ID<input type="email" name="email" required autocomplete="email" placeholder="Enter registered Email ID"></label><button class="route-btn primary" type="submit">Send Reset Link</button><button class="route-btn" type="button" data-back-login>Back to Sign In</button></form></div></div>
 
     </div>`
@@ -4389,7 +4384,6 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
     const registerBadge=routeShell.querySelector('[data-register-role-badge]');
     const registerSubmit=routeShell.querySelector('[data-register-submit]');
     let activeRole='student';
-    let otpTimer=null;
 
     const setGroupEnabled=(container,enabled)=>{
       if(!container) return;
@@ -4413,20 +4407,10 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
 
     const showRole=(role)=>{
       activeRole=role==='faculty'?'faculty':'student';
-      clearInterval(otpTimer);
       syncRoleSelector('signin');
       rolePanels.forEach(panel=>panel.hidden=panel.dataset.authPreviewPanel!==activeRole);
       if(registerPanel) registerPanel.hidden=true;
       if(resetPanel) resetPanel.hidden=true;
-    };
-
-    const showMethod=(panel,method)=>{
-      const wanted=method==='otp'?'otp':'password';
-      panel.querySelectorAll('[data-auth-method]').forEach(btn=>{
-        const active=btn.dataset.authMethod===wanted;
-        btn.classList.toggle('primary',active);
-      });
-      panel.querySelectorAll('[data-auth-method-panel]').forEach(box=>box.hidden=box.dataset.authMethodPanel!==wanted);
     };
 
     roleToggle?.addEventListener('click',()=>{
@@ -4436,11 +4420,6 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
       else showRole(next);
     });
     showRole('student');
-
-    rolePanels.forEach(panel=>{
-      panel.querySelectorAll('[data-auth-method]').forEach(btn=>btn.addEventListener('click',()=>showMethod(panel,btn.dataset.authMethod)));
-      showMethod(panel,'password');
-    });
 
     const prepareRegistration=(role,options={})=>{
       activeRole=role==='faculty'?'faculty':'student';
@@ -4458,8 +4437,8 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
         photoField.hidden=false;
         photoField.querySelectorAll('input').forEach(el=>el.disabled=false);
       }
-      /* Faculty refinement: only Full Name, Surname, Gender, College Name,
-         Subject Name and Address are required. Student requirements remain unchanged. */
+      /* Faculty-only optional fields are Mobile Number and Pin Code.
+         Email/password remain required because they are login/recovery credentials. */
       registerForm?.querySelectorAll('[data-faculty-optional]').forEach(el=>{
         el.required=!isFaculty;
       });
@@ -4491,91 +4470,18 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
     routeShell.querySelectorAll('[data-auth-reset]').forEach(btn=>btn.addEventListener('click',()=>openReset(btn.dataset.authReset)));
     routeShell.querySelectorAll('[data-back-login]').forEach(btn=>btn.addEventListener('click',()=>showRole(activeRole)));
 
-    /* Registration preview: requested mobile/email/password checks. */
+    /* Real auth is owned by gpcs-backend-bridge.js. If that script fails,
+       do not simulate success and do not expose the removed OTP workflow. */
     registerForm?.addEventListener('submit',e=>{
       e.preventDefault();
-      const enabledInputs=[...registerForm.querySelectorAll('input:not(:disabled),select:not(:disabled),textarea:not(:disabled)')];
-      const mobile=enabledInputs.find(el=>el.closest('label')?.textContent.includes('Mobile Number'));
-      const email=enabledInputs.find(el=>el.closest('label')?.textContent.includes('Email ID'));
-      const passwords=enabledInputs.filter(el=>el.type==='password');
-      const pin=enabledInputs.find(el=>el.closest('label')?.textContent.includes('Pin Code'));
-
-      const mobileValue=mobile?.value.trim()||'';
-      const emailValue=email?.value.trim()||'';
-      const pinValue=pin?.value.trim()||'';
-      if(mobile && mobileValue && !/^\d{10}$/.test(mobileValue)){
-        mobile.focus(); toast('Enter a valid 10-digit Mobile Number, or leave it blank if optional.'); return;
-      }
-      if(email && emailValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)){
-        email.focus(); toast('Enter a valid Email ID, or leave it blank if optional.'); return;
-      }
-      if(pin && pinValue && !/^\d{6}$/.test(pinValue)){
-        pin.focus(); toast('Enter a valid 6-digit Pin Code, or leave it blank if optional.'); return;
-      }
-      if(passwords.length>=2){
-        const p1=passwords[0].value;
-        const p2=passwords[1].value;
-        if(activeRole==='faculty' && ((p1 && !p2) || (!p1 && p2))){
-          (p1?passwords[1]:passwords[0]).focus();
-          toast('Enter both Password fields, or leave both blank if optional.'); return;
-        }
-        if(p1 && p2 && p1!==p2){
-          passwords[1].focus(); toast('Password and Confirm Password do not match.'); return;
-        }
-      }
-      if(!registerForm.checkValidity()){
-        registerForm.reportValidity(); return;
-      }
-      toast(activeRole==='faculty'
-        ? 'Faculty registration submitted successfully.'
-        : 'Student registration validated — account can now be created securely.');
-      showRole(activeRole);
+      if(!registerForm.checkValidity()){registerForm.reportValidity();return}
+      toast('Secure registration service is unavailable. Refresh the page and try again.');
     });
 
-    /* Password sign-in preview. */
     routeShell.querySelectorAll('#previewStudentPassword,#previewFacultyPassword').forEach(form=>form.addEventListener('submit',e=>{
       e.preventDefault();
       if(!form.checkValidity()){form.reportValidity();return}
-      toast(activeRole==='faculty'
-        ? 'Faculty password sign-in validated. Live system applies secure password verification and rate limiting.'
-        : 'Student password sign-in validated. Live system applies secure password verification and rate limiting.');
-    }));
-
-    /* OTP preview with expiry/resend-cooldown behavior. */
-    routeShell.querySelectorAll('#previewStudentOtp,#previewFacultyOtp').forEach(form=>form.addEventListener('submit',e=>{
-      e.preventDefault();
-      const mobile=form.querySelector('input[maxlength="10"]');
-      const otpWrap=form.querySelector('[data-otp-demo]');
-      const otp=otpWrap?.querySelector('input');
-      const sendBtn=form.querySelector('[data-otp-send]');
-
-      if(!mobile || !/^\d{10}$/.test(mobile.value.trim())){
-        mobile?.focus(); toast('Enter a valid 10-digit Mobile Number.'); return;
-      }
-
-      if(otpWrap?.hidden){
-        otpWrap.hidden=false;
-        otp?.focus();
-        let seconds=45;
-        sendBtn.disabled=true;
-        sendBtn.textContent=`Resend OTP in ${seconds}s`;
-        clearInterval(otpTimer);
-        otpTimer=setInterval(()=>{
-          seconds--;
-          if(seconds<=0){
-            clearInterval(otpTimer);
-            sendBtn.disabled=false;
-            sendBtn.textContent='Resend OTP';
-          }else sendBtn.textContent=`Resend OTP in ${seconds}s`;
-        },1000);
-        toast('OTP sent in preview — live code expires after 5 minutes and is rate-limited.');
-        return;
-      }
-
-      if(!/^\d{6}$/.test((otp?.value||'').trim())){
-        otp?.focus(); toast('Enter the 6-digit OTP.'); return;
-      }
-      toast(`${activeRole==='faculty'?'Faculty':'Student'} OTP verification flow is connected.`);
+      toast('Secure sign-in service is unavailable. Refresh the page and try again.');
     }));
 
     /* Password recovery is submitted to Laravel by gpcs-backend-bridge.js. */

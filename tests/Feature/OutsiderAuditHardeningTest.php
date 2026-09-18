@@ -28,7 +28,8 @@ class OutsiderAuditHardeningTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee(route('portal.terms', absolute: false), false)
-            ->assertSee(route('portal.privacy', absolute: false), false);
+            ->assertSee(route('portal.privacy', absolute: false), false)
+            ->assertSee('data-gpcs-public-link', false);
     }
 
     public function test_registration_requires_terms_consent_server_side(): void
@@ -98,6 +99,19 @@ class OutsiderAuditHardeningTest extends TestCase
         ]);
     }
 
+    public function test_password_reset_broker_throttle_does_not_claim_an_email_was_sent(): void
+    {
+        Password::shouldReceive('sendResetLink')
+            ->once()
+            ->andReturn(Password::RESET_THROTTLED);
+
+        $this->postJson('/forgot-password', [
+            'email' => 'throttled@example.com',
+        ])->assertStatus(503)->assertJson([
+            'message' => 'Password reset email is temporarily unavailable. Please try again later or contact the Admin.',
+        ]);
+    }
+
     public function test_protected_upload_directory_is_not_configured_for_public_symlinking(): void
     {
         $this->assertSame([], config('filesystems.links'));
@@ -160,6 +174,16 @@ class OutsiderAuditHardeningTest extends TestCase
             ->assertJsonValidationErrors('link');
 
         $this->actingAs($admin)
+            ->postJson('/admin/notifications', [
+                'audience' => 'all',
+                'title' => 'Unsafe notice',
+                'message' => 'Credential-bearing links are not allowed.',
+                'link' => 'https://user:pass@example.com/path',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('link');
+
+        $this->actingAs($admin)
             ->post('/admin/notifications', [
                 'audience' => 'all',
                 'title' => 'Safe notice',
@@ -167,6 +191,17 @@ class OutsiderAuditHardeningTest extends TestCase
                 'link' => '/#notes',
             ])
             ->assertRedirect();
+    }
+
+    public function test_removed_otp_and_chunk_preview_code_do_not_return(): void
+    {
+        $template = (string) file_get_contents(resource_path('views/portal.blade.php'));
+
+        $this->assertStringNotContainsString('previewStudentOtp', $template);
+        $this->assertStringNotContainsString('previewFacultyOtp', $template);
+        $this->assertStringNotContainsString('otpTimer', $template);
+        $this->assertStringNotContainsString('MAX_UPLOAD_BYTES', $template);
+        $this->assertStringNotContainsString('/* Chunk uploader */', $template);
     }
 
     public function test_repeated_failed_logins_are_rate_limited(): void

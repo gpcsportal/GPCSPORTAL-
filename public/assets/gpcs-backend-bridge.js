@@ -205,6 +205,7 @@
 
   const isPublicAnchor = (anchor) => {
     if (!anchor || anchor.closest('.logo-interactive')) return true;
+    if (anchor.hasAttribute('data-gpcs-public-link')) return true;
     const href = anchor.getAttribute('href') || '';
     const route = previewRouteFromAnchor(anchor);
     const text = (anchor.textContent || '').trim().toLowerCase();

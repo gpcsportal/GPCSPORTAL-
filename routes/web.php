@@ -33,6 +33,12 @@ Route::get('/', [PortalController::class, 'index'])
 Route::get('/index.php', [PortalController::class, 'index'])
     ->name('portal.legacy');
 
+Route::view('/terms', 'legal.terms')
+    ->name('portal.terms');
+
+Route::view('/privacy', 'legal.privacy')
+    ->name('portal.privacy');
+
 Route::get('/auth/status', static function (Request $request) {
     $user = $request->user();
 

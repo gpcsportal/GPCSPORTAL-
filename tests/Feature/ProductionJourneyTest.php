@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Paper;
-use App\Models\PortalNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -143,43 +142,6 @@ class ProductionJourneyTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors(['attachment']);
 
         $this->assertEmpty(Storage::disk('public')->allFiles());
-    }
-
-    public function test_digital_board_empty_and_populated_states_are_backed_by_stable_api_results(): void
-    {
-        $student = User::create($this->userAttributes([
-            'email' => 'notice.student@example.com',
-            'role' => 'student',
-        ]));
-
-        $admin = User::create($this->userAttributes([
-            'email' => 'notice.admin@example.com',
-            'role' => 'admin',
-            'admin_identifier' => 'notice-admin',
-        ]));
-
-        $this->actingAs($student)
-            ->getJson('/api/notifications')
-            ->assertOk()
-            ->assertExactJson([]);
-
-        PortalNotification::create([
-            'admin_id' => $admin->id,
-            'audience' => 'students',
-            'title' => 'Exam Notice',
-            'message' => 'Internal practical starts Monday.',
-            'link' => '/#notes',
-        ]);
-
-        $this->actingAs($student)
-            ->getJson('/api/notifications')
-            ->assertOk()
-            ->assertJsonCount(1)
-            ->assertJsonFragment([
-                'title' => 'Exam Notice',
-                'message' => 'Internal practical starts Monday.',
-                'link' => '/#notes',
-            ]);
     }
 
     public function test_login_wall_preserves_deep_link_and_rejects_external_redirects(): void

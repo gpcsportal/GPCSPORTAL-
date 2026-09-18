@@ -14,7 +14,7 @@
     stylesheet.dataset[dataKey.replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = '1';
     document.head.appendChild(stylesheet);
   };
-  ensureStylesheet('/assets/gpcs-audit-fixes.css', 'gpcs-audit-fixes');
+  ensureStylesheet('/assets/gpcs-audit-fixes.css?v=20260918-remove-digital-board', 'gpcs-audit-fixes');
   ensureStylesheet('/assets/gpcs-responsive.css', 'gpcs-responsive');
 
   const ensureAccessibilityShell = () => {

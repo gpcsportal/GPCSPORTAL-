@@ -4619,7 +4619,7 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
 .admin-phase1-nav .route-btn{white-space:nowrap}
 .admin-extra-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .admin-extra-grid .route-card{min-width:0}
-.admin-notification-history,.admin-log-list{margin-top:14px}
+.admin-log-list{margin-top:14px}
 .admin-empty{padding:18px;border:1px dashed var(--line,#dbe5f0);border-radius:12px;text-align:center;color:var(--muted,#64748b)}
 .admin-field-list{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
 .admin-field-chip{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.16);font-size:.78rem;font-weight:700}
@@ -4670,6 +4670,6 @@ window.GPCS_BACKEND = {
   }
 };
 </script>
-<script src="/assets/gpcs-backend-bridge.js" defer></script>
+<script src="/assets/gpcs-backend-bridge.js?v=20260918-remove-digital-board" defer></script>
 
 </body></html>

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Note;
 use App\Models\Paper;
-use App\Models\PortalNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -169,35 +168,19 @@ class FinalPortalJourneyTest extends TestCase
             ->assertOk();
     }
 
-    public function test_digital_board_handles_content_and_guest_auth_boundary(): void
+    public function test_digital_board_feature_is_completely_removed(): void
     {
-        $admin = User::create($this->userAttributes([
-            'email' => 'notice-admin@example.com',
-            'role' => 'admin',
-            'admin_identifier' => 'notice-admin',
-        ]));
-        $student = User::create($this->userAttributes([
-            'email' => 'notice-student@example.com',
-            'role' => 'student',
-        ]));
+        $bridge = (string) file_get_contents(public_path('assets/gpcs-backend-bridge.js'));
+        $adminLayout = (string) file_get_contents(resource_path('views/admin/layout.blade.php'));
 
-        PortalNotification::create([
-            'admin_id' => $admin->id,
-            'audience' => 'students',
-            'title' => 'Exam Notice',
-            'message' => 'Exam form submission closes Friday.',
-            'link' => null,
-        ]);
-
-        $this->getJson('/api/notifications')->assertUnauthorized();
-
-        $this->actingAs($student)
-            ->getJson('/api/notifications')
-            ->assertOk()
-            ->assertJsonFragment([
-                'title' => 'Exam Notice',
-                'message' => 'Exam form submission closes Friday.',
-            ]);
+        $this->assertStringNotContainsString('gpcs-digital-board', $bridge);
+        $this->assertStringNotContainsString('loadDigitalBoard', $bridge);
+        $this->assertStringNotContainsString('admin.notifications', $adminLayout);
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('portal.notifications'));
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('admin.notifications.index'));
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasTable('portal_notifications'));
+        $this->get('/api/notifications')->assertNotFound();
+        $this->get('/admin/notifications')->assertNotFound();
     }
 
     public function test_retired_frontend_endpoints_are_not_referenced_by_the_portal_template(): void

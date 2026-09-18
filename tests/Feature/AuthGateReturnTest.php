@@ -18,7 +18,7 @@ class AuthGateReturnTest extends TestCase
             'role' => null,
         ]);
 
-        foreach (['/api/papers', '/api/notes', '/api/gallery', '/api/notifications', '/metadata/papers'] as $url) {
+        foreach (['/api/papers', '/api/notes', '/api/gallery', '/metadata/papers'] as $url) {
             $this->getJson($url)->assertUnauthorized();
         }
     }

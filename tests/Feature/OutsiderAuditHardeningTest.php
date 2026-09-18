@@ -145,54 +145,6 @@ class OutsiderAuditHardeningTest extends TestCase
         $this->assertTrue(Hash::check('new-secure-password', $user->password));
     }
 
-    public function test_admin_notification_rejects_protocol_relative_or_backslash_links(): void
-    {
-        $admin = User::create($this->userAttributes([
-            'email' => 'notification-admin@example.com',
-            'role' => 'admin',
-            'admin_identifier' => 'notification-admin',
-        ]));
-
-        $this->actingAs($admin)
-            ->postJson('/admin/notifications', [
-                'audience' => 'all',
-                'title' => 'Unsafe notice',
-                'message' => 'Do not allow protocol-relative links.',
-                'link' => '//evil.example/phish',
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('link');
-
-        $this->actingAs($admin)
-            ->postJson('/admin/notifications', [
-                'audience' => 'all',
-                'title' => 'Unsafe notice',
-                'message' => 'Do not allow backslash paths.',
-                'link' => '/\\evil.example',
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('link');
-
-        $this->actingAs($admin)
-            ->postJson('/admin/notifications', [
-                'audience' => 'all',
-                'title' => 'Unsafe notice',
-                'message' => 'Credential-bearing links are not allowed.',
-                'link' => 'https://user:pass@example.com/path',
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('link');
-
-        $this->actingAs($admin)
-            ->post('/admin/notifications', [
-                'audience' => 'all',
-                'title' => 'Safe notice',
-                'message' => 'Internal portal links are allowed.',
-                'link' => '/#notes',
-            ])
-            ->assertRedirect();
-    }
-
     public function test_removed_otp_and_chunk_preview_code_do_not_return(): void
     {
         $template = (string) file_get_contents(resource_path('views/portal.blade.php'));

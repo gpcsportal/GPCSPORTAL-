@@ -79,7 +79,7 @@ Route::get('/privacy', static fn () => view('legal', [
         ],
         [
             'heading' => 'Why it is used',
-            'body' => 'Information is used to operate sign-in, account access, academic libraries, moderation, notifications, password recovery and security controls.',
+            'body' => 'Information is used to operate sign-in, account access, academic libraries, moderation, password recovery and security controls.',
         ],
         [
             'heading' => 'Cookies and sessions',
@@ -145,7 +145,7 @@ Route::post('/chunk_upload.php', static fn () => response()->json([
 |--------------------------------------------------------------------------
 |
 | Only the landing/branding/auth experience is public. Data APIs, metadata,
-| notices, contact actions, uploads, downloads and outbound feature links all
+| contact actions, uploads, downloads and outbound feature links all
 | require a signed-in active portal account.
 */
 
@@ -162,9 +162,6 @@ Route::middleware(['auth', 'account.active'])->group(function (): void {
         ->middleware('throttle:120,1')
         ->name('gallery.index');
 
-    Route::get('/api/notifications', [PortalController::class, 'notifications'])
-        ->middleware('throttle:120,1')
-        ->name('portal.notifications');
 
     Route::post('/contact', [ContactController::class, 'store'])
         ->middleware('throttle:10,1')

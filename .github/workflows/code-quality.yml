@@ -30,76 +30,13 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Guard tracked secrets
+        shell: bash
         run: |
-          if git ls-files | grep -Eq '(^|/)\.env$|(^|/)\.env\.(local|production|prod|staging|development)        with:
-          php-version: '8.2'
-          extensions: curl, fileinfo, gd, mbstring, pdo_mysql, pdo_sqlite
-          coverage: none
-
-      - name: Validate Composer files
-        run: |
-          test -f composer.lock
-          composer validate --strict --no-interaction
-
-      - name: Install locked dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
-
-      - name: Audit locked dependencies
-        run: composer audit --locked --no-interaction
-
-      - name: PHP and JavaScript syntax scan
-        run: |
-          find app bootstrap config database routes tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
-          node --check public/assets/gpcs-backend-bridge.js
-
-      - name: Prepare isolated test database
-        run: |
-          rm -f database/testing.sqlite
-          touch database/testing.sqlite
-          php artisan migrate --force
-
-      - name: Boot routes
-        run: php artisan route:list --except-vendor
-
-      - name: Run full test suite
-        run: php artisan test
-; then
+          if git ls-files | grep -Eq '(^|/)\.env$|(^|/)\.env\.(local|production|prod|staging|development)$'; then
             echo "A real environment file is tracked. Remove it from Git before deploying."
             exit 1
           fi
-          if git ls-files | grep -Eq '(^|/)(id_rsa|id_ed25519|[^/]+\.(pem|p12|pfx|key))        with:
-          php-version: '8.2'
-          extensions: curl, fileinfo, gd, mbstring, pdo_mysql, pdo_sqlite
-          coverage: none
-
-      - name: Validate Composer files
-        run: |
-          test -f composer.lock
-          composer validate --strict --no-interaction
-
-      - name: Install locked dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
-
-      - name: Audit locked dependencies
-        run: composer audit --locked --no-interaction
-
-      - name: PHP and JavaScript syntax scan
-        run: |
-          find app bootstrap config database routes tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
-          node --check public/assets/gpcs-backend-bridge.js
-
-      - name: Prepare isolated test database
-        run: |
-          rm -f database/testing.sqlite
-          touch database/testing.sqlite
-          php artisan migrate --force
-
-      - name: Boot routes
-        run: php artisan route:list --except-vendor
-
-      - name: Run full test suite
-        run: php artisan test
-; then
+          if git ls-files | grep -Eq '(^|/)(id_rsa|id_ed25519|[^/]+\.(pem|p12|pfx|key))$'; then
             echo "A private key-like file is tracked. Store credentials in Railway variables instead."
             exit 1
           fi

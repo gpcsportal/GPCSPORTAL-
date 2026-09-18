@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use FilesystemIterator;
 use Illuminate\Support\Facades\Storage;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 use Throwable;
 
 class UploadStorageService
@@ -15,22 +19,82 @@ class UploadStorageService
 
         try {
             $root = Storage::disk('public')->path('');
-            $freeBytes = @disk_free_space($root);
         } catch (Throwable) {
-            // Capacity probes are advisory. The actual storage write is still
-            // verified by the upload controller and will fail safely if needed.
+            // The actual write remains verified by the upload controller.
             return true;
         }
 
-        if ($freeBytes === false) {
+        $effectiveFreeBytes = null;
+
+        $filesystemFree = @disk_free_space($root);
+        if (is_int($filesystemFree) || is_float($filesystemFree)) {
+            $effectiveFreeBytes = max(0, (int) $filesystemFree);
+        }
+
+        $configuredCapacityMb = max(
+            0,
+            (int) config('gpcs_uploads.volume_capacity_mb', 0)
+        );
+
+        if ($configuredCapacityMb > 0) {
+            $usedBytes = $this->directorySize($root);
+
+            if ($usedBytes !== null) {
+                $configuredCapacityBytes = $configuredCapacityMb * 1024 * 1024;
+                $configuredFreeBytes = max(0, $configuredCapacityBytes - $usedBytes);
+
+                $effectiveFreeBytes = $effectiveFreeBytes === null
+                    ? $configuredFreeBytes
+                    : min($effectiveFreeBytes, $configuredFreeBytes);
+            }
+        }
+
+        // If both probes are unavailable, fail open here and let the verified
+        // filesystem write fail safely in the controller instead of blocking
+        // uploads because of an unreliable capacity probe.
+        if ($effectiveFreeBytes === null) {
             return true;
         }
 
         $reserveBytes = max(
-            $reserveMb * 1024 * 1024,
+            max(0, $reserveMb) * 1024 * 1024,
             (int) ceil($bytes * 0.10)
         );
 
-        return $freeBytes >= ($bytes + $reserveBytes);
+        return $effectiveFreeBytes >= ($bytes + $reserveBytes);
+    }
+
+    private function directorySize(string $root): ?int
+    {
+        if (! is_dir($root)) {
+            return null;
+        }
+
+        try {
+            $bytes = 0;
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator(
+                    $root,
+                    FilesystemIterator::SKIP_DOTS
+                ),
+                RecursiveIteratorIterator::LEAVES_ONLY
+            );
+
+            /** @var SplFileInfo $file */
+            foreach ($iterator as $file) {
+                if (! $file->isFile() || $file->isLink()) {
+                    continue;
+                }
+
+                $size = $file->getSize();
+                if ($size > 0) {
+                    $bytes += $size;
+                }
+            }
+
+            return $bytes;
+        } catch (Throwable) {
+            return null;
+        }
     }
 }

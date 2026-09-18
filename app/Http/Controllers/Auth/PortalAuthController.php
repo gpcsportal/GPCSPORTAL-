@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\FileCompressionService;
+use App\Services\UploadStorageService;
 use App\Support\SafePortalRedirect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use RuntimeException;
+use Throwable;
 
 class PortalAuthController extends Controller
 {
@@ -50,7 +54,11 @@ class PortalAuthController extends Controller
         ]);
     }
 
-    public function register(Request $request, FileCompressionService $images)
+    public function register(
+        Request $request,
+        FileCompressionService $images,
+        UploadStorageService $storageCapacity
+    )
     {
         $role = $request->input('role');
 
@@ -87,19 +95,67 @@ class PortalAuthController extends Controller
         unset($validated['redirect']);
 
         $photo = null;
+        $profileFile = $request->file('profile_photo');
 
-        if ($request->hasFile('profile_photo')) {
-            $photo = $request->file('profile_photo')->store('profiles', 'public');
-            $images->compressImageInPlace(storage_path('app/public/'.$photo));
+        if ($profileFile && ! $profileFile->isValid()) {
+            return response()->json([
+                'message' => 'The profile photo could not be read. Please choose it again.',
+            ], 422);
         }
 
-        // A completed Student or Faculty sign-up is immediately usable. Admin
-        // can still suspend an account later, but there is no post-sign-up role
-        // approval gate between account creation and portal access.
-        $user = User::create(array_merge($validated, [
-            'profile_photo_path' => $photo,
-            'is_active' => true,
-        ]));
+        if ($profileFile && ! $storageCapacity->hasCapacityFor((int) $profileFile->getSize())) {
+            return response()->json([
+                'message' => 'Upload storage is nearly full. Please create the account without a profile photo or contact the Admin.',
+            ], 507);
+        }
+
+        try {
+            if ($profileFile) {
+                $storedPhoto = $profileFile->store('profiles', 'public');
+
+                if (! is_string($storedPhoto) || $storedPhoto === '') {
+                    throw new RuntimeException('Profile photo storage returned an empty path.');
+                }
+
+                $photo = $storedPhoto;
+                $disk = Storage::disk('public');
+
+                if (! $disk->exists($photo)) {
+                    throw new RuntimeException('Stored profile photo is missing from the public disk.');
+                }
+
+                $absolutePhotoPath = $disk->path($photo);
+                if (! is_file($absolutePhotoPath) || ! is_readable($absolutePhotoPath)) {
+                    throw new RuntimeException('Stored profile photo is not readable.');
+                }
+
+                $images->compressImageInPlace($absolutePhotoPath);
+
+                clearstatcache(true, $absolutePhotoPath);
+                $finalPhotoSize = filesize($absolutePhotoPath);
+                if ($finalPhotoSize === false || $finalPhotoSize <= 0) {
+                    throw new RuntimeException('Stored profile photo is empty after processing.');
+                }
+            }
+
+            // A completed Student or Faculty sign-up is immediately usable. Admin
+            // can still suspend an account later, but there is no post-sign-up role
+            // approval gate between account creation and portal access.
+            $user = User::create(array_merge($validated, [
+                'profile_photo_path' => $photo,
+                'is_active' => true,
+            ]));
+        } catch (Throwable $exception) {
+            if ($photo) {
+                Storage::disk('public')->delete($photo);
+            }
+
+            report($exception);
+
+            return response()->json([
+                'message' => 'Account could not be created right now. Please try again.',
+            ], 500);
+        }
 
         Auth::login($user);
         $request->session()->regenerate();

@@ -79,7 +79,7 @@ The directory name is retained for compatibility with the existing application a
 
 ## Database backup / recovery
 
-The MySQL volume contains production account, moderation, session, notification and content metadata. Before public launch, enable and verify a Railway database backup / point-in-time recovery policy appropriate for the production plan, and test a restore procedure with non-production data.
+The MySQL volume contains production account, moderation, session and content metadata. Before public launch, enable and verify a Railway database backup / point-in-time recovery policy appropriate for the production plan, and test a restore procedure with non-production data.
 
 Do not replace this with an ad-hoc destructive database command or an unverified dump job. Backup/PITR settings are infrastructure state and should be reviewed in Railway before applying any staged environment change.
 

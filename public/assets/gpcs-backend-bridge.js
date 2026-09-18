@@ -205,6 +205,7 @@
 
   const isPublicAnchor = (anchor) => {
     if (!anchor || anchor.closest('.logo-interactive')) return true;
+    if (anchor.hasAttribute('data-gpcs-public-link')) return true;
     const href = anchor.getAttribute('href') || '';
     const route = previewRouteFromAnchor(anchor);
     const text = (anchor.textContent || '').trim().toLowerCase();
@@ -442,8 +443,8 @@
         if(role==='student'){fd.set('college_year',a[4]?.value||'');fd.set('branch',a[5]?.value||'');fd.set('semester',a[6]?.value||'');}
         else{fd.set('subject_department',a[4]?.value||'');fd.set('employee_id',a[5]?.value||'');}
         const outer=[...form.querySelectorAll(':scope > label input, :scope > label textarea')];
-        const mobile=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===10);const email=outer.find(x=>x.type==='email');const passes=outer.filter(x=>x.type==='password');const pin=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===6);const address=outer.find(x=>x.tagName==='TEXTAREA');const photo=outer.find(x=>x.type==='file');
-        if(mobile?.value)fd.set('mobile',mobile.value);fd.set('email',email?.value||'');fd.set('password',passes[0]?.value||'');fd.set('password_confirmation',passes[1]?.value||'');if(pin?.value)fd.set('pin_code',pin.value);fd.set('address',address?.value||'');if(photo?.files?.[0])fd.set('profile_photo',photo.files[0]);
+        const mobile=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===10);const email=outer.find(x=>x.type==='email');const passes=outer.filter(x=>x.type==='password');const pin=outer.find(x=>x.inputMode==='numeric'&&x.maxLength===6);const address=outer.find(x=>x.tagName==='TEXTAREA');const photo=outer.find(x=>x.type==='file');const terms=form.querySelector('input[name="terms_accepted"]');
+        if(mobile?.value)fd.set('mobile',mobile.value);fd.set('email',email?.value||'');fd.set('password',passes[0]?.value||'');fd.set('password_confirmation',passes[1]?.value||'');if(pin?.value)fd.set('pin_code',pin.value);fd.set('address',address?.value||'');if(photo?.files?.[0])fd.set('profile_photo',photo.files[0]);if(terms?.checked)fd.set('terms_accepted','1');
         const redirect=readIntended(); if(redirect)fd.set('redirect',redirect);
         const body=await request(routes.register,{method:'POST',body:fd,timeoutMs:45000});
         toast(body.message);

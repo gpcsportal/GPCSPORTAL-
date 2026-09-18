@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\{
     ResetPasswordController
 };
 
+use App\Services\PortalSettingsService;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -149,7 +150,7 @@ Route::post('/chunk_upload.php', static fn () => response()->json([
 | require a signed-in active portal account.
 */
 
-Route::middleware(['auth', 'account.active'])->group(function (): void {
+Route::middleware('portal.access')->group(function (): void {
     Route::get('/api/papers', [PaperController::class, 'index'])
         ->middleware('throttle:120,1')
         ->name('papers.index');
@@ -162,7 +163,29 @@ Route::middleware(['auth', 'account.active'])->group(function (): void {
         ->middleware('throttle:120,1')
         ->name('gallery.index');
 
+    Route::get('/papers/{paper}/download', [PaperController::class, 'download'])
+        ->name('papers.download');
 
+    Route::get('/notes/{note}/download', [NoteController::class, 'download'])
+        ->name('notes.download');
+
+    Route::get('/gallery/{image}', [GalleryController::class, 'show'])
+        ->name('gallery.show');
+
+    Route::get('/go/{destination}', static function (
+        PortalSettingsService $settings,
+        string $destination
+    ) {
+        $destinations = $settings->officialLinks();
+
+        abort_unless(array_key_exists($destination, $destinations), 404);
+
+        return redirect()->away($destinations[$destination]);
+    })->where('destination', 'student|syllabus|previous|main-result|all-result')
+        ->name('portal.outbound');
+});
+
+Route::middleware(['auth', 'account.active'])->group(function (): void {
     Route::post('/contact', [ContactController::class, 'store'])
         ->middleware('throttle:10,1')
         ->name('contact.store');
@@ -186,33 +209,6 @@ Route::middleware(['auth', 'account.active'])->group(function (): void {
     Route::post('/gallery', [GalleryController::class, 'store'])
         ->middleware('throttle:30,1')
         ->name('gallery.store');
-
-    Route::get('/papers/{paper}/download', [PaperController::class, 'download'])
-        ->name('papers.download');
-
-    Route::get('/notes/{note}/download', [NoteController::class, 'download'])
-        ->name('notes.download');
-
-    Route::get('/gallery/{image}', [GalleryController::class, 'show'])
-        ->name('gallery.show');
-
-    // Safe relay for the fixed official external resources shown in the portal.
-    // The login redirect remains same-origin; only these server-side allowlisted
-    // keys can leave the GPCS site after authentication.
-    Route::get('/go/{destination}', static function (string $destination) {
-        $destinations = [
-            'student' => 'https://www.rgpvdiploma.in/StudentLife/StudentLogin.aspx',
-            'syllabus' => 'https://www.rgpvdiploma.in/Academics/AICTEBased.aspx',
-            'previous' => 'https://www.polygwalior.ac.in/diploma_papers.php',
-            'main-result' => 'https://result.rgpv.ac.in/Result/Diplomarslt.aspx',
-            'all-result' => 'https://result.rgpv.ac.in/Result/ProgramSelect.aspx',
-        ];
-
-        abort_unless(array_key_exists($destination, $destinations), 404);
-
-        return redirect()->away($destinations[$destination]);
-    })->where('destination', 'student|syllabus|previous|main-result|all-result')
-        ->name('portal.outbound');
 });
 
 require __DIR__.'/admin.php';

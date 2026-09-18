@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminIdleTimeout;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsurePortalAccountActive;
+use App\Http\Middleware\EnforcePortalLoginWall;
 use App\Http\Middleware\SecurityHeaders;
 use App\Support\SafePortalRedirect;
 use Illuminate\Foundation\Application;
@@ -47,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EnsureAdmin::class,
             'admin.idle' => AdminIdleTimeout::class,
             'account.active' => EnsurePortalAccountActive::class,
+            'portal.access' => EnforcePortalLoginWall::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

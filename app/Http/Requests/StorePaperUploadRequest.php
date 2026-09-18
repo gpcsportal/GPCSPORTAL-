@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Services\PortalSettingsService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePaperUploadRequest extends FormRequest
 {
@@ -13,7 +15,8 @@ class StorePaperUploadRequest extends FormRequest
 
     public function rules(): array
     {
-        $maxMb = (int) config('gpcs_uploads.paper_max_mb', 100);
+        $settings = app(PortalSettingsService::class);
+        $maxMb = $settings->paperMaxMb();
         $maxKb = $maxMb * 1024;
 
         return [
@@ -29,7 +32,7 @@ class StorePaperUploadRequest extends FormRequest
             'subject_code' => ['nullable', 'string', 'max:30'],
             'paper_name' => ['nullable', 'string', 'max:255'],
             'subject_name' => ['nullable', 'string', 'max:255'],
-            'branch' => ['nullable', 'in:CS,ME,EE,ET'],
+            'branch' => ['nullable', Rule::in($settings->branches())],
             'semester' => ['nullable', 'regex:/^(?:Semester )?(?:I|II|III|IV|V|VI)$/'],
             'year' => ['nullable', 'integer', 'between:2000,2100'],
             'session' => ['nullable', 'string', 'max:30'],
@@ -38,7 +41,7 @@ class StorePaperUploadRequest extends FormRequest
 
     public function messages(): array
     {
-        $maxMb = (int) config('gpcs_uploads.paper_max_mb', 100);
+        $maxMb = app(PortalSettingsService::class)->paperMaxMb();
 
         return [
             'file.required' => 'Choose a Paper file to upload.',

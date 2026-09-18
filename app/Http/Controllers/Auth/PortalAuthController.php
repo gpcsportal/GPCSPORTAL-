@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\FileCompressionService;
 use App\Services\UploadStorageService;
+use App\Services\PortalSettingsService;
 use App\Support\SafePortalRedirect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -81,7 +82,7 @@ class PortalAuthController extends Controller
         if ($role === 'student') {
             $rules += [
                 'college_year' => 'required|string|max:30',
-                'branch' => 'required|in:CS,ME,EE,ET',
+                'branch' => ['required', Rule::in(app(PortalSettingsService::class)->branches())],
                 'semester' => 'required|in:I,II,III,IV,V,VI',
             ];
         } else {

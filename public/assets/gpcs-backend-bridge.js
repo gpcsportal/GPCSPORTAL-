@@ -5,6 +5,21 @@
   const toast = (message) => { if (typeof window.toast === 'function') window.toast(message); else alert(message); };
   const AUTH_REASON = 'Ye dekhne ke liye pehle sign in karein.';
   const INTENDED_KEY = 'gpcs:intended';
+  const loginWallEnabled = cfg.loginWallEnabled !== false;
+  const limits = {
+    paper: Math.max(1, Math.min(100, Number(cfg.limits?.paper) || 100)),
+    notes: Math.max(1, Math.min(200, Number(cfg.limits?.notes) || 200)),
+    gallery: Math.max(1, Math.min(20, Number(cfg.limits?.gallery) || 20)),
+  };
+  const alwaysPrivateRoutes = new Set(['upload','contact','student-dashboard','faculty-dashboard']);
+  const routeNeedsAuth = (route) => loginWallEnabled || alwaysPrivateRoutes.has(String(route || '').toLowerCase());
+  const intendedNeedsAuth = (value) => {
+    if (loginWallEnabled) return true;
+    const safe = safeInternalRedirect(value);
+    if (!safe) return false;
+    const hash = (safe.split('#')[1] || '').toLowerCase();
+    return alwaysPrivateRoutes.has(hash);
+  };
 
   const ensureStylesheet = (href, dataKey) => {
     if (document.querySelector(`link[data-${dataKey}]`)) return;
@@ -118,24 +133,6 @@
     }
   };
 
-  const externalRelays = new Map([
-    ['https://www.rgpvdiploma.in/StudentLife/StudentLogin.aspx', '/go/student'],
-    ['https://www.rgpvdiploma.in/Academics/AICTEBased.aspx', '/go/syllabus'],
-    ['https://www.polygwalior.ac.in/diploma_papers.php', '/go/previous'],
-    ['https://result.rgpv.ac.in/Result/Diplomarslt.aspx', '/go/main-result'],
-    ['https://result.rgpv.ac.in/Result/ProgramSelect.aspx', '/go/all-result'],
-  ]);
-
-  const relayForExternal = (href) => {
-    try {
-      const parsed = new URL(href, window.location.origin);
-      const key = `${parsed.origin}${parsed.pathname}${parsed.search}`;
-      return externalRelays.get(key) || null;
-    } catch (_) {
-      return null;
-    }
-  };
-
   const previewRouteFromAnchor = (anchor) => {
     const href = anchor?.getAttribute?.('href') || '';
     if (!href.includes('index.php?page=')) return null;
@@ -222,8 +219,6 @@
     if (route === 'login' && ((anchor.textContent || '').toLowerCase().includes('upload paper') || anchor.classList.contains('nav-upload'))) return '/#upload';
 
     const href = anchor.getAttribute('href') || '';
-    const relay = relayForExternal(href);
-    if (relay) return relay;
 
     try {
       const parsed = new URL(href, window.location.origin);
@@ -300,6 +295,12 @@
     window.gpcsPreviewNavigate = (route, push = true) => {
       const normalized = String(route || 'home').toLowerCase();
       if (normalized === 'home' || normalized === 'login') return originalPreviewNavigate(route, push);
+      if (!routeNeedsAuth(normalized)) {
+        const result = originalPreviewNavigate(route, push);
+        syncNavCurrent();
+        window.setTimeout(() => loadLibraries(), 0);
+        return result;
+      }
       return isAuthenticated().then((allowed) => {
         if (!allowed) return redirectToLogin(`/#${normalized}`);
         const result = originalPreviewNavigate(route, push);
@@ -325,7 +326,7 @@
       if (!['home','login'].includes(route)) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (!await isAuthenticated()) {
+        if (routeNeedsAuth(route) && !await isAuthenticated()) {
           redirectToLogin(`/#${route}`);
           return;
         }
@@ -346,7 +347,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     const intended = intendedForAnchor(anchor);
-    if (!await isAuthenticated()) {
+    if (intendedNeedsAuth(intended) && !await isAuthenticated()) {
       redirectToLogin(intended);
       return;
     }
@@ -456,7 +457,7 @@
       }
       if (id === 'previewUploadForm') {
         const fd=new FormData(); const f=fileByLabel(form,'Choose Paper File'); if(!f)throw new Error('Choose a Paper file.');
-        if(f.size > 100 * 1024 * 1024) throw new Error('Paper file must be 100 MB or smaller.');
+        if(f.size > limits.paper * 1024 * 1024) throw new Error(`Paper file must be ${limits.paper} MB or smaller.`);
         fd.set('file',f);
         for(const [label,key] of [['Paper Code','paper_code'],['Subject Code','subject_code'],['Paper Name','paper_name'],['Subject Name','subject_name'],['Branch','branch'],['Semester','semester'],['Year','year'],['Session','session']]){const v=valueByLabel(form,label);if(v)fd.set(key,v);}
         const body=await request(routes.paperStore,{method:'POST',body:fd,timeoutMs:600000});toast(body.message);form.reset();return;
@@ -464,7 +465,7 @@
       if (id === 'previewNoteForm') {
         const fd=new FormData(form);
         const attachment=form.querySelector('input[type="file"]')?.files?.[0];
-        if(attachment && attachment.size > 200 * 1024 * 1024) throw new Error('Notes file must be 200 MB or smaller.');
+        if(attachment && attachment.size > limits.notes * 1024 * 1024) throw new Error(`Notes file must be ${limits.notes} MB or smaller.`);
         const body=await request(routes.noteStore,{method:'POST',body:fd,timeoutMs:900000});toast(body.message);form.reset();return;
       }
       if (id === 'previewContactForm') { const els=inputs(form); const body=await submitJson(routes.contactStore,{name:els[0]?.value||'',contact:els[1]?.value||'',message:els[2]?.value||''});toast(body.message);form.reset();return; }
@@ -481,7 +482,7 @@
 
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const loadLibraries = async () => {
-    if (!await isAuthenticated()) return;
+    if (loginWallEnabled && !await isAuthenticated()) return;
     const paperRows=document.getElementById('previewPaperRows');
     if(paperRows && paperRows.dataset.liveLoaded!=='1'){
       paperRows.dataset.liveLoaded='1';
@@ -521,11 +522,11 @@
     if (!authenticated) {
       const directFeature = currentRequestedFeature();
       const params = new URLSearchParams(window.location.search);
-      if (directFeature && params.get('auth_required') !== '1') {
+      if (directFeature && intendedNeedsAuth(directFeature) && params.get('auth_required') !== '1') {
         redirectToLogin(directFeature);
         return;
       }
-      return;
+      if (loginWallEnabled) return;
     }
 
     const runLibraries = () => loadLibraries();
@@ -542,7 +543,7 @@
   // Re-check the server-side session before a protected route is shown again.
   window.addEventListener('pageshow', async (event) => {
     const feature = currentRequestedFeature();
-    if (!feature) return;
+    if (!feature || !intendedNeedsAuth(feature)) return;
 
     if (event.persisted) {
       document.documentElement.style.visibility = 'hidden';
@@ -566,7 +567,7 @@
       return;
     }
     const files=[...event.target.files]; if(!files.length)return;
-    for(const file of files){const fd=new FormData();fd.set('image',file);fd.set('category','Other College Related');try{const body=await request(routes.galleryStore,{method:'POST',body:fd,timeoutMs:120000});toast(body.message);}catch(e){if(e?.code==='AUTH_REQUIRED'){redirectToLogin('/#gallery');return;}toast(e.message);break;}}
+    for(const file of files){if(file.size > limits.gallery * 1024 * 1024){toast(`Gallery image must be ${limits.gallery} MB or smaller.`);break;}const fd=new FormData();fd.set('image',file);fd.set('category','Other College Related');try{const body=await request(routes.galleryStore,{method:'POST',body:fd,timeoutMs:120000});toast(body.message);}catch(e){if(e?.code==='AUTH_REQUIRED'){redirectToLogin('/#gallery');return;}toast(e.message);break;}}
     event.target.value='';
   }, true);
 })();

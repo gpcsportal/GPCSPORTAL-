@@ -3622,7 +3622,7 @@ html[data-theme="dark"] .reference-signin{
 
 
 // Paper Library rendering/search is owned by /assets/gpcs-backend-bridge.js.
-// The retired papers_api.php/download.php compatibility renderer was removed.
+// The retired legacy compatibility renderer was removed.
 
 // v2.0 Smart Gallery — actual image-content classification in the browser.
 // Manual category selection always wins; Smart Auto never uses filename/caption/OCR.

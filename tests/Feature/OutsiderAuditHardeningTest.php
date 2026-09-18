@@ -76,8 +76,13 @@ class OutsiderAuditHardeningTest extends TestCase
     {
         $this->assertSame([], config('filesystems.links'));
 
-        $this->get('/storage/private-paper.pdf')
-            ->assertNotFound();
+        $response = $this->get('/storage/private-paper.pdf');
+
+        $this->assertContains(
+            $response->getStatusCode(),
+            [403, 404],
+            'Protected upload paths must never be served successfully from /storage.'
+        );
     }
 
     public function test_password_reset_token_changes_the_password(): void

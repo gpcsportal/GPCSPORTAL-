@@ -7,6 +7,7 @@ use App\Services\FileCompressionService;
 use App\Services\UploadStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use RuntimeException;
 use Throwable;
 
@@ -38,7 +39,20 @@ class GalleryController extends Controller
 
         $validated = $request->validate([
             'image' => ['required', 'image', 'max:'.$maxKilobytes],
-            'category' => ['required', 'string', 'max:100'],
+            'category' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::in([
+                    'Campus & Infrastructure',
+                    'College Events',
+                    'Labs & Workshops',
+                    'Students & Staff',
+                    'Sports & Cultural',
+                    'Projects & Activities',
+                    'Other College Related',
+                ]),
+            ],
             'caption' => ['nullable', 'string', 'max:255'],
         ]);
 

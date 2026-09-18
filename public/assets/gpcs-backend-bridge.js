@@ -480,42 +480,6 @@
   }, true);
 
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-  const safeHref = (value) => {
-    if (!value) return null;
-    try {
-      const url = new URL(value, window.location.origin);
-      if (url.origin === window.location.origin) return `${url.pathname}${url.search}${url.hash}`;
-      return url.protocol === 'https:' ? url.toString() : null;
-    } catch (_) { return null; }
-  };
-
-  const loadDigitalBoard = async (authenticated = null) => {
-    const main=document.querySelector('main');
-    if(!main || document.getElementById('gpcsDigitalBoard'))return;
-    const board=document.createElement('section');
-    board.id='gpcsDigitalBoard';board.className='gpcs-digital-board';board.setAttribute('aria-live','polite');
-    board.innerHTML='<div class="gpcs-digital-board-head"><h2>Digital Board</h2><span>Latest college notices</span></div><div class="gpcs-digital-board-list" role="status" aria-busy="true"><div class="gpcs-digital-board-empty">Loading notices…</div></div>';
-    main.prepend(board);
-    const list=board.querySelector('.gpcs-digital-board-list');
-
-    const allowed = authenticated === null ? await isAuthenticated() : authenticated;
-    if (!allowed) {
-      list.innerHTML=`<button type="button" class="gpcs-digital-board-empty" data-gpcs-login-intended="/#home" style="width:100%;cursor:pointer">${AUTH_REASON}</button>`;
-      list.setAttribute('aria-busy', 'false');
-      return;
-    }
-
-    try{
-      const rows=await request('/api/notifications',{timeoutMs:12000});
-      list.innerHTML=rows.length?rows.map(n=>{const href=safeHref(n.link);const tag=href?'a':'div';const attrs=href?` href="${escapeHtml(href)}"${href.startsWith('https://')?' target="_blank" rel="noopener noreferrer"':''}`:'';const date=n.published_at?new Date(n.published_at).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'}):'';return `<${tag} class="gpcs-digital-board-card"${attrs}><strong>${escapeHtml(n.title||'Notice')}</strong><p>${escapeHtml(n.message||'')}</p>${date?`<time>${escapeHtml(date)}</time>`:''}</${tag}>`;}).join(''):'<div class="gpcs-digital-board-empty">No notices are available right now.</div>';
-      list.setAttribute('aria-busy', 'false');
-    }catch(e){
-      if(e?.code==='AUTH_REQUIRED'){redirectToLogin('/#home');return;}
-      list.innerHTML='<div class="gpcs-digital-board-empty">Notices are temporarily unavailable. Please try again later.</div>';
-      list.setAttribute('aria-busy', 'false');
-    }
-  };
-
   const loadLibraries = async () => {
     if (!await isAuthenticated()) return;
     const paperRows=document.getElementById('previewPaperRows');
@@ -561,11 +525,9 @@
         redirectToLogin(directFeature);
         return;
       }
-      if (window.location.hash !== '#login') loadDigitalBoard(false);
       return;
     }
 
-    loadDigitalBoard(true);
     const runLibraries = () => loadLibraries();
     if ('requestIdleCallback' in window) window.requestIdleCallback(runLibraries,{timeout:1400});
     else window.setTimeout(runLibraries,120);

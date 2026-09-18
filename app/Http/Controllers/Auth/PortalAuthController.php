@@ -24,6 +24,7 @@ class PortalAuthController extends Controller
             'role' => ['required', Rule::in(['student', 'faculty'])],
             'remember' => ['sometimes', 'boolean'],
             'redirect' => ['nullable', 'string', 'max:2048'],
+            'terms_accepted' => ['required', 'accepted'],
         ]);
 
         $remember = (bool) ($validated['remember'] ?? false);
@@ -92,7 +93,7 @@ class PortalAuthController extends Controller
 
         $validated = $request->validate($rules);
         $requestedRedirect = $validated['redirect'] ?? null;
-        unset($validated['redirect']);
+        unset($validated['redirect'], $validated['terms_accepted']);
 
         $photo = null;
         $profileFile = $request->file('profile_photo');

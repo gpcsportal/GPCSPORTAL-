@@ -4670,6 +4670,6 @@ window.GPCS_BACKEND = {
   }
 };
 </script>
-<script src="/assets/gpcs-backend-bridge.js?v=20260918-remove-digital-board" defer></script>
+<script src="/assets/gpcs-backend-bridge.js?v=20260918-final" defer></script>
 
 </body></html>

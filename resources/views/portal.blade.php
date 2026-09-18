@@ -4564,6 +4564,11 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
 <script>
 window.GPCS_BACKEND = {
   csrf: document.querySelector('meta[name="csrf-token"]')?.content || '',
+  limits: {
+    paperMaxMb: @json(config('gpcs_uploads.paper_max_mb', 100)),
+    notesMaxMb: @json(config('gpcs_uploads.notes_max_mb', 200)),
+    galleryMaxMb: @json(config('gpcs_uploads.gallery_max_mb', 20))
+  },
   routes: {
     login: @json(route('portal.login')),
     register: @json(route('portal.register')),

@@ -40,6 +40,10 @@ Route::prefix('admin')
         Route::delete('/subjects/{subject}', [AdminSubjectController::class, 'destroy'])->name('subjects.destroy');
 
         Route::get('/content/{type}', [AdminContentController::class, 'index'])->name('content.index');
+        Route::get('/content/{type}/create', [AdminContentController::class, 'create'])->name('content.create');
+        Route::post('/content/{type}', [AdminContentController::class, 'store'])->name('content.store');
+        Route::get('/content/{type}/{id}/edit', [AdminContentController::class, 'edit'])->name('content.edit');
+        Route::put('/content/{type}/{id}', [AdminContentController::class, 'update'])->name('content.update');
         Route::patch('/content/{type}/{id}/status', [AdminContentController::class, 'status'])->name('content.status');
         Route::delete('/content/{type}/{id}', [AdminContentController::class, 'destroy'])->name('content.destroy');
 

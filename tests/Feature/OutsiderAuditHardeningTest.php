@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use RuntimeException;
 use Tests\TestCase;
 
 class OutsiderAuditHardeningTest extends TestCase
@@ -56,6 +57,27 @@ class OutsiderAuditHardeningTest extends TestCase
         ])->assertOk()->assertJson([
             'message' => 'If an account exists for that email, a password reset link has been sent.',
         ]);
+    }
+
+    public function test_password_reset_mail_failure_returns_a_safe_service_error(): void
+    {
+        Password::shouldReceive('sendResetLink')
+            ->once()
+            ->andThrow(new RuntimeException('SMTP unavailable'));
+
+        $this->postJson('/forgot-password', [
+            'email' => 'mail-failure@example.com',
+        ])->assertStatus(503)->assertJson([
+            'message' => 'Password reset email is temporarily unavailable. Please try again later or contact the Admin.',
+        ]);
+    }
+
+    public function test_protected_upload_directory_is_not_configured_for_public_symlinking(): void
+    {
+        $this->assertSame([], config('filesystems.links'));
+
+        $this->get('/storage/private-paper.pdf')
+            ->assertNotFound();
     }
 
     public function test_password_reset_token_changes_the_password(): void

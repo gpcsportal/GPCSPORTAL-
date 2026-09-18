@@ -18,7 +18,7 @@ class ForgotPasswordController extends Controller
         // Always return the same response so this endpoint cannot be used to
         // discover whether an email address is registered in the portal.
         try {
-            Password::sendResetLink([
+            $status = Password::sendResetLink([
                 'email' => $validated['email'],
             ]);
         } catch (Throwable $exception) {
@@ -29,8 +29,16 @@ class ForgotPasswordController extends Controller
             ], 503);
         }
 
+        // Keep known and unknown accounts indistinguishable, but do not claim
+        // delivery when the password broker itself reports throttling/failure.
+        if (in_array($status, [Password::RESET_LINK_SENT, Password::INVALID_USER], true)) {
+            return response()->json([
+                'message' => 'If an account exists for that email, a password reset link has been sent.',
+            ]);
+        }
+
         return response()->json([
-            'message' => 'If an account exists for that email, a password reset link has been sent.',
-        ]);
+            'message' => 'Password reset email is temporarily unavailable. Please try again later or contact the Admin.',
+        ], 503);
     }
 }

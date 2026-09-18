@@ -8,6 +8,7 @@ use App\Models\Paper;
 use App\Models\SubjectMaster;
 use App\Models\User;
 use App\Services\PortalSettingsService;
+use Database\Seeders\SubjectMasterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -192,8 +193,14 @@ class AdminControlAuditTest extends TestCase
 
         $this->assertSame('QUALITY ASSURANCE UPDATED', $subject->fresh()->subject_name);
 
+        $this->seed(SubjectMasterSeeder::class);
+        $this->assertSame('QUALITY ASSURANCE UPDATED', $subject->fresh()->subject_name);
+
         $this->delete(route('admin.subjects.destroy', $subject))
             ->assertSessionHas('status');
+        $this->assertDatabaseMissing('subject_masters', ['id' => $subject->id]);
+
+        $this->seed(SubjectMasterSeeder::class);
         $this->assertDatabaseMissing('subject_masters', ['id' => $subject->id]);
     }
 

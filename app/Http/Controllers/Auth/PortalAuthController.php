@@ -24,7 +24,6 @@ class PortalAuthController extends Controller
             'role' => ['required', Rule::in(['student', 'faculty'])],
             'remember' => ['sometimes', 'boolean'],
             'redirect' => ['nullable', 'string', 'max:2048'],
-            'terms_accepted' => ['required', 'accepted'],
         ]);
 
         $remember = (bool) ($validated['remember'] ?? false);
@@ -76,6 +75,7 @@ class PortalAuthController extends Controller
             'pin_code' => 'nullable|digits:6',
             'profile_photo' => 'nullable|image|max:5120',
             'redirect' => ['nullable', 'string', 'max:2048'],
+            'terms_accepted' => ['required', 'accepted'],
         ];
 
         if ($role === 'student') {

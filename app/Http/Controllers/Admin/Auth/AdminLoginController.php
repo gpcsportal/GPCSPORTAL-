@@ -53,6 +53,10 @@ class AdminLoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/?logged_out=1#home')
+            ->withHeaders([
+                'Cache-Control' => 'no-store, private',
+                'Pragma' => 'no-cache',
+            ]);
     }
 }

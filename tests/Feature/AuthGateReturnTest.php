@@ -87,6 +87,7 @@ class AuthGateReturnTest extends TestCase
             'college_year' => 'First Year',
             'branch' => 'CS',
             'semester' => 'I',
+            'terms_accepted' => '1',
             'redirect' => '/#papers',
         ]);
 
@@ -116,6 +117,7 @@ class AuthGateReturnTest extends TestCase
             'address' => 'Shivpuri',
             'subject_department' => 'Computer Science',
             'employee_id' => 'FAC-001',
+            'terms_accepted' => '1',
             'redirect' => '/#gallery',
         ]);
 

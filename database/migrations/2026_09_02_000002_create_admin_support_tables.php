@@ -1,3 +1,28 @@
 <?php
-use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
-return new class extends Migration {public function up(): void {Schema::create('portal_notifications',function(Blueprint $t){$t->id();$t->foreignId('admin_id')->constrained('users')->cascadeOnDelete();$t->string('audience',30);$t->string('recipient')->nullable();$t->string('title',120);$t->text('message');$t->string('link',500)->nullable();$t->timestamps();});Schema::create('admin_activity_logs',function(Blueprint $t){$t->id();$t->foreignId('admin_id')->nullable()->constrained('users')->nullOnDelete();$t->string('action',120)->index();$t->string('target_type')->nullable();$t->unsignedBigInteger('target_id')->nullable();$t->json('context')->nullable();$t->string('ip_address',45)->nullable();$t->timestamps();$t->index(['target_type','target_id']);});}public function down(): void {Schema::dropIfExists('admin_activity_logs');Schema::dropIfExists('portal_notifications');}};
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('admin_activity_logs', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('admin_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('action', 120)->index();
+            $table->string('target_type')->nullable();
+            $table->unsignedBigInteger('target_id')->nullable();
+            $table->json('context')->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->timestamps();
+            $table->index(['target_type', 'target_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('admin_activity_logs');
+    }
+};

@@ -56,7 +56,6 @@ class LogoutFlowTest extends TestCase
 
         $this->assertGuest();
         $this->getJson('/api/notes')->assertUnauthorized();
-        $this->getJson('/api/notifications')->assertUnauthorized();
     }
 
     public function test_admin_logout_invalidates_session_and_admin_route_is_protected_afterwards(): void

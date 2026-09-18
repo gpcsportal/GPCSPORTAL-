@@ -66,6 +66,11 @@ jobs:
 
       - name: Prepare isolated test database
         run: |
+          # Laravel's test bootstrap probes .env even though CI variables are
+          # supplied by the job environment. Create an empty, untracked file
+          # so PHPUnit reports real application warnings instead of a missing
+          # local environment-file warning on every test.
+          : > .env
           rm -f database/testing.sqlite
           touch database/testing.sqlite
           php artisan migrate --force

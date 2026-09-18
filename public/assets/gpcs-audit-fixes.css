@@ -80,9 +80,17 @@ a.gpcs-digital-board-card::after{content:"↗";position:absolute;top:14px;right:
 }
 
 @media print{
-  .site-header,.main-nav,.menu-btn,.gpcs-digital-board,.toast,.route-actions button{display:none!important}
-  body{background:#fff!important;color:#000!important}
-  main,.container,.route-content,.route-card{width:100%!important;max-width:none!important;box-shadow:none!important;border:0!important}
+  @page{margin:14mm}
+  html{scroll-behavior:auto!important}
+  body{background:#fff!important;color:#000!important;font-size:11pt;line-height:1.45;-webkit-print-color-adjust:economy;print-color-adjust:economy}
+  .portal-utility-bar,.site-header,.main-nav,.menu-btn,.gpcs-digital-board,.toast,.reference-footer,.bottom-nav,.reference-back-top,.route-searchbar,.route-form,.route-actions button,.gpcs-skip-link{display:none!important}
+  main,.container,.route-content,.route-card,.route-table-wrap{width:100%!important;max-width:none!important;box-shadow:none!important;border:0!important;overflow:visible!important}
+  .route-card{break-inside:avoid-page;padding:0!important}
+  .route-table{width:100%!important;min-width:0!important;border-collapse:collapse!important;font-size:9pt}
+  .route-table thead{display:table-header-group}
+  .route-table tr,.route-note{break-inside:avoid-page}
+  .route-table th,.route-table td{white-space:normal!important;overflow-wrap:anywhere!important;padding:6px!important;border:1px solid #999!important;color:#000!important;background:#fff!important}
+  .route-note{border:1px solid #bbb!important;box-shadow:none!important;background:#fff!important;color:#000!important}
   a{color:#000!important;text-decoration:underline}
 }
 

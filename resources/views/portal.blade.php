@@ -3340,12 +3340,23 @@ html[data-theme="dark"] .reference-signin{
 <span aria-hidden="true" class="theme-cycle-icon" data-theme-cycle-icon="system"><svg viewbox="0 0 24 24"><rect height="12" rx="2" width="18" x="3" y="4"></rect><path d="M8 20h8M12 16v4"></path></svg></span>
 <span class="theme-cycle-label" data-theme-cycle-label="">System</span>
 </button>
+@auth
+<form method="POST" action="{{ route('portal.logout') }}" class="gpcs-logout-form" data-gpcs-logout-form>
+@csrf
+<button aria-label="Logout from GPCS Portal" class="gpcs-logout-btn" type="submit">
+<span aria-hidden="true" class="signin-icon-shell"><svg aria-hidden="true" class="ui-svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" viewbox="0 0 24 24"><path d="M10 5H5v14h5"></path><path d="M14 8l4 4-4 4M18 12H9"></path></svg></span>
+<span class="logout-label-full">Logout</span>
+<span class="logout-label-short">Exit</span>
+</button>
+</form>
+@else
 <a aria-label="GPCS Sign In" class="gpcs-signin-btn reference-signin" href="index.php?page=login">
 <span aria-hidden="true" class="signin-glow"></span>
 <span aria-hidden="true" class="signin-icon-shell"><svg aria-hidden="true" class="ui-svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" viewbox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg></span>
 <span class="signin-copy"><span><span class="signin-label-full">GPCS Sign In</span><span class="signin-label-short">Sign In</span></span><small>Student access</small></span>
 <span aria-hidden="true" class="signin-arrow">→</span>
 </a>
+@endauth
 </div>
 </div>
 <div class="container topbar-shell reference-nav-shell">

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use RuntimeException;
 use Tests\TestCase;
 
 class AccountRecoveryTest extends TestCase
@@ -37,6 +38,19 @@ class AccountRecoveryTest extends TestCase
         $this->postJson('/forgot-password', [
             'email' => 'unknown@example.com',
         ])->assertOk()->assertJson(['message' => $generic]);
+    }
+
+    public function test_mail_transport_failure_returns_service_unavailable_without_exposing_account_state(): void
+    {
+        Password::shouldReceive('sendResetLink')
+            ->once()
+            ->andThrow(new RuntimeException('SMTP unavailable'));
+
+        $this->postJson('/forgot-password', [
+            'email' => 'recover@example.com',
+        ])->assertStatus(503)->assertJson([
+            'message' => 'Password reset email is temporarily unavailable. Please try again later.',
+        ]);
     }
 
     public function test_valid_reset_token_changes_password_and_returns_to_sign_in(): void

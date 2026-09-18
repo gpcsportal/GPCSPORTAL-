@@ -6,20 +6,25 @@ use App\Models\GalleryImage;
 use App\Models\Note;
 use App\Models\Paper;
 use App\Models\SubjectMaster;
-use Illuminate\Support\Facades\Cache;
+use App\Services\PortalSettingsService;
 
 class PortalController extends Controller
 {
-    public function index()
+    public function index(PortalSettingsService $settings)
     {
-        $counts = Cache::remember('portal.home.counts', now()->addMinutes(5), static fn (): array => [
+        $branches = $settings->branches();
+
+        return view('portal', [
             'paperCount' => Paper::where('status', 'approved')->count(),
             'noteCount' => Note::where('status', 'approved')->count(),
             'galleryCount' => GalleryImage::where('status', 'approved')->count(),
             'subjectCount' => SubjectMaster::count(),
+            'branches' => $branches,
+            'branchCount' => count($branches),
+            'paperMaxMb' => $settings->paperMaxMb(),
+            'notesMaxMb' => $settings->notesMaxMb(),
+            'galleryMaxMb' => $settings->galleryMaxMb(),
+            'loginWallEnabled' => $settings->loginWallEnabled(),
         ]);
-
-        return view('portal', $counts);
     }
-
 }

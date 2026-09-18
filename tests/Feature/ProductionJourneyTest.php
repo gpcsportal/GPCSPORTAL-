@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\GalleryImage;
 use App\Models\Note;
 use App\Models\Paper;
 use App\Models\PortalNotification;
@@ -124,6 +125,60 @@ class ProductionJourneyTest extends TestCase
         $this->actingAs($faculty)->post('/logout')->assertRedirect('/?logged_out=1#home');
         $this->assertGuest();
         $this->getJson('/api/notes')->assertUnauthorized();
+    }
+
+
+    public function test_gallery_and_contact_actions_work_for_authenticated_user(): void
+    {
+        Storage::fake('public');
+
+        $student = User::create($this->userAttributes([
+            'email' => 'gallery-student@example.com',
+            'role' => 'student',
+        ]));
+        $admin = User::create($this->userAttributes([
+            'email' => 'gallery-admin@example.com',
+            'role' => 'admin',
+            'admin_identifier' => 'gallery-admin',
+        ]));
+
+        $upload = $this->actingAs($student)
+            ->postJson('/gallery', [
+                'image' => UploadedFile::fake()->image('campus.jpg', 640, 480),
+                'category' => 'Campus & Infrastructure',
+                'caption' => 'Campus view',
+            ])
+            ->assertCreated();
+
+        $image = GalleryImage::findOrFail($upload->json('id'));
+        $this->assertSame('pending', $image->status);
+        Storage::disk('public')->assertExists($image->file_path);
+
+        $this->actingAs($admin)
+            ->patch('/admin/content/gallery/'.$image->id.'/status', ['status' => 'approved'])
+            ->assertRedirect();
+
+        $this->actingAs($student)
+            ->getJson('/api/gallery')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $image->id, 'category' => 'Campus & Infrastructure']);
+
+        $this->actingAs($student)
+            ->get('/gallery/'.$image->id)
+            ->assertOk();
+
+        $this->actingAs($student)
+            ->postJson('/contact', [
+                'name' => 'Journey Student',
+                'contact' => 'journey-student@example.com',
+                'message' => 'Please verify the contact workflow.',
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('contact_messages', [
+            'contact' => 'journey-student@example.com',
+            'status' => 'new',
+        ]);
     }
 
     public function test_upload_size_limits_are_enforced_by_server_rules(): void

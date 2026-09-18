@@ -2,6 +2,11 @@
   const cfg = window.GPCS_BACKEND || {};
   const routes = cfg.routes || {};
   const csrf = cfg.csrf || '';
+  const uploadLimits = {
+    paperMb: Number(cfg.limits?.paperMaxMb || 100),
+    notesMb: Number(cfg.limits?.notesMaxMb || 200),
+    galleryMb: Number(cfg.limits?.galleryMaxMb || 20),
+  };
   const toast = (message) => { if (typeof window.toast === 'function') window.toast(message); else alert(message); };
   const AUTH_REASON = 'Ye dekhne ke liye pehle sign in karein.';
   const INTENDED_KEY = 'gpcs:intended';
@@ -454,7 +459,7 @@
       }
       if (id === 'previewUploadForm') {
         const fd=new FormData(); const f=fileByLabel(form,'Choose Paper File'); if(!f)throw new Error('Choose a Paper file.');
-        if(f.size > 100 * 1024 * 1024) throw new Error('Paper file must be 100 MB or smaller.');
+        if(f.size > uploadLimits.paperMb * 1024 * 1024) throw new Error(`Paper file must be ${uploadLimits.paperMb} MB or smaller.`);
         fd.set('file',f);
         for(const [label,key] of [['Paper Code','paper_code'],['Subject Code','subject_code'],['Paper Name','paper_name'],['Subject Name','subject_name'],['Branch','branch'],['Semester','semester'],['Year','year'],['Session','session']]){const v=valueByLabel(form,label);if(v)fd.set(key,v);}
         const body=await request(routes.paperStore,{method:'POST',body:fd,timeoutMs:600000});toast(body.message);form.reset();return;
@@ -462,7 +467,7 @@
       if (id === 'previewNoteForm') {
         const fd=new FormData(form);
         const attachment=form.querySelector('input[type="file"]')?.files?.[0];
-        if(attachment && attachment.size > 200 * 1024 * 1024) throw new Error('Notes file must be 200 MB or smaller.');
+        if(attachment && attachment.size > uploadLimits.notesMb * 1024 * 1024) throw new Error(`Notes file must be ${uploadLimits.notesMb} MB or smaller.`);
         const body=await request(routes.noteStore,{method:'POST',body:fd,timeoutMs:900000});toast(body.message);form.reset();return;
       }
       if (id === 'previewContactForm') { const els=inputs(form); const body=await submitJson(routes.contactStore,{name:els[0]?.value||'',contact:els[1]?.value||'',message:els[2]?.value||''});toast(body.message);form.reset();return; }
@@ -601,8 +606,33 @@
       redirectToLogin('/#gallery');
       return;
     }
-    const files=[...event.target.files]; if(!files.length)return;
-    for(const file of files){const fd=new FormData();fd.set('image',file);fd.set('category','Other College Related');try{const body=await request(routes.galleryStore,{method:'POST',body:fd,timeoutMs:120000});toast(body.message);}catch(e){if(e?.code==='AUTH_REQUIRED'){redirectToLogin('/#gallery');return;}toast(e.message);break;}}
+
+    const files=[...event.target.files];
+    if(!files.length)return;
+
+    const category=(event.target.dataset.category||'Other College Related').trim()||'Other College Related';
+    const maxBytes=uploadLimits.galleryMb*1024*1024;
+
+    for(const file of files){
+      if(file.size>maxBytes){
+        toast(`Gallery image must be ${uploadLimits.galleryMb} MB or smaller.`);
+        continue;
+      }
+
+      const fd=new FormData();
+      fd.set('image',file);
+      fd.set('category',category);
+
+      try{
+        const body=await request(routes.galleryStore,{method:'POST',body:fd,timeoutMs:120000});
+        toast(body.message);
+      }catch(e){
+        if(e?.code==='AUTH_REQUIRED'){redirectToLogin('/#gallery');return;}
+        toast(e.message);
+        break;
+      }
+    }
+
     event.target.value='';
   }, true);
 })();

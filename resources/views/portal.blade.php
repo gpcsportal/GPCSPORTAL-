@@ -3922,7 +3922,7 @@ document.addEventListener('click', (event) => {
 
 
 <style>
-.auth-preview-shell{max-width:1120px}.auth-preview-toggle-wrap{display:flex;justify-content:center;margin:0 auto 18px}.auth-preview-toggle{width:min(430px,100%);min-height:54px;display:grid;grid-template-columns:minmax(92px,1fr) 66px minmax(120px,1fr);align-items:center;gap:12px;padding:7px 14px;border:1px solid #cbdff5;border-radius:16px;background:rgba(232,242,255,.92);color:#18406f;font:inherit;font-weight:900;cursor:pointer;box-shadow:0 7px 18px rgba(8,87,214,.09);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:border-color .2s ease,box-shadow .2s ease,transform .14s ease}.auth-preview-toggle:hover{border-color:#9fc8f5;box-shadow:0 10px 24px rgba(8,87,214,.14)}.auth-preview-toggle:active{transform:scale(.99)}.auth-preview-toggle:focus-visible{outline:3px solid rgba(12,116,255,.25);outline-offset:3px}.auth-preview-toggle-state{color:#075ed8;text-align:right;transition:color .2s ease}.auth-preview-toggle-hint{color:#60758e;text-align:left;font-size:.84rem;line-height:1.15}.auth-preview-toggle-track{position:relative;width:62px;height:32px;border-radius:999px;background:linear-gradient(135deg,#0750d3,#0c74ff);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 5px 14px rgba(8,87,214,.22)}.auth-preview-toggle-thumb{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 3px 9px rgba(5,35,78,.28);transition:transform .24s cubic-bezier(.2,.8,.2,1)}.auth-preview-toggle.is-faculty .auth-preview-toggle-thumb{transform:translateX(30px)}.auth-preview-toggle.is-faculty .auth-preview-toggle-state{color:#7a4d00}.auth-preview-grid{align-items:start}.auth-preview-head h2{margin:8px 0 4px}.auth-preview-head p{margin:0 0 13px}.auth-preview-methods{display:flex;gap:7px;margin:12px 0}.auth-preview-methods .route-btn{flex:1}.auth-preview-register{text-align:center;margin:14px 0 0!important}.link-button{appearance:none;border:0;background:transparent;padding:0;color:#075ed8;font:inherit;font-weight:900;cursor:pointer}.auth-preview-linkrow{text-align:right;margin-top:-4px}.auth-preview-info{min-height:230px}.auth-preview-registration{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.auth-preview-registration>[data-student-fields],.auth-preview-registration>[data-faculty-fields]{display:contents}.auth-preview-registration .route-actions,.auth-preview-check{grid-column:1/-1}.auth-preview-check{display:flex!important;align-items:center;gap:8px;padding:10px;border:1px solid rgba(111,159,210,.28);border-radius:12px}.auth-preview-check input{width:auto!important}.otp-demo-field small{color:#6d829a}.auth-preview-admin{margin-top:14px}.auth-preview-admin summary{cursor:pointer;font-weight:900;color:#0b58c6}.auth-preview-role[hidden],.auth-preview-register-panel[hidden],.auth-preview-reset-panel[hidden],[data-auth-method-panel][hidden],[data-student-fields][hidden],[data-faculty-fields][hidden]{display:none!important}html[data-theme="dark"] .auth-preview-toggle{background:#0d1e33;border-color:#2d4b6c;color:#d8e6f5}html[data-theme="dark"] .auth-preview-toggle:hover{border-color:#41698f}html[data-theme="dark"] .auth-preview-toggle-state{color:#79b9ff}html[data-theme="dark"] .auth-preview-toggle.is-faculty .auth-preview-toggle-state{color:#f0bd66}html[data-theme="dark"] .auth-preview-toggle-hint{color:#b8c9dc}html[data-theme="dark"] .link-button{color:#79b9ff}@media(max-width:700px){.auth-preview-toggle{grid-template-columns:minmax(74px,1fr) 62px minmax(92px,1.1fr);gap:8px;padding:7px 10px}.auth-preview-toggle-hint{font-size:.76rem}.auth-preview-registration{grid-template-columns:1fr}.auth-preview-registration .route-actions,.auth-preview-check{grid-column:auto}.auth-preview-methods{flex-direction:column}}
+.auth-preview-shell{max-width:1120px}.auth-preview-toggle-wrap{display:flex;justify-content:center;margin:0 auto 18px}.auth-preview-toggle{width:min(430px,100%);min-height:54px;display:grid;grid-template-columns:minmax(92px,1fr) 66px minmax(120px,1fr);align-items:center;gap:12px;padding:7px 14px;border:1px solid #cbdff5;border-radius:16px;background:rgba(232,242,255,.92);color:#18406f;font:inherit;font-weight:900;cursor:pointer;box-shadow:0 7px 18px rgba(8,87,214,.09);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:border-color .2s ease,box-shadow .2s ease,transform .14s ease}.auth-preview-toggle:hover{border-color:#9fc8f5;box-shadow:0 10px 24px rgba(8,87,214,.14)}.auth-preview-toggle:active{transform:scale(.99)}.auth-preview-toggle:focus-visible{outline:3px solid rgba(12,116,255,.25);outline-offset:3px}.auth-preview-toggle-state{color:#075ed8;text-align:right;transition:color .2s ease}.auth-preview-toggle-hint{color:#60758e;text-align:left;font-size:.84rem;line-height:1.15}.auth-preview-toggle-track{position:relative;width:62px;height:32px;border-radius:999px;background:linear-gradient(135deg,#0750d3,#0c74ff);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 5px 14px rgba(8,87,214,.22)}.auth-preview-toggle-thumb{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 3px 9px rgba(5,35,78,.28);transition:transform .24s cubic-bezier(.2,.8,.2,1)}.auth-preview-toggle.is-faculty .auth-preview-toggle-thumb{transform:translateX(30px)}.auth-preview-toggle.is-faculty .auth-preview-toggle-state{color:#7a4d00}.auth-preview-grid{align-items:start}.auth-preview-head h2{margin:8px 0 4px}.auth-preview-head p{margin:0 0 13px}.auth-preview-register{text-align:center;margin:14px 0 0!important}.link-button{appearance:none;border:0;background:transparent;padding:0;color:#075ed8;font:inherit;font-weight:900;cursor:pointer}.auth-preview-linkrow{text-align:right;margin-top:-4px}.auth-preview-info{min-height:230px}.auth-preview-registration{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.auth-preview-registration>[data-student-fields],.auth-preview-registration>[data-faculty-fields]{display:contents}.auth-preview-registration .route-actions,.auth-preview-check{grid-column:1/-1}.auth-preview-check{display:flex!important;align-items:center;gap:8px;padding:10px;border:1px solid rgba(111,159,210,.28);border-radius:12px}.auth-preview-check input{width:auto!important}.auth-preview-admin{margin-top:14px}.auth-preview-admin summary{cursor:pointer;font-weight:900;color:#0b58c6}.auth-preview-role[hidden],.auth-preview-register-panel[hidden],.auth-preview-reset-panel[hidden],[data-auth-method-panel][hidden],[data-student-fields][hidden],[data-faculty-fields][hidden]{display:none!important}html[data-theme="dark"] .auth-preview-toggle{background:#0d1e33;border-color:#2d4b6c;color:#d8e6f5}html[data-theme="dark"] .auth-preview-toggle:hover{border-color:#41698f}html[data-theme="dark"] .auth-preview-toggle-state{color:#79b9ff}html[data-theme="dark"] .auth-preview-toggle.is-faculty .auth-preview-toggle-state{color:#f0bd66}html[data-theme="dark"] .auth-preview-toggle-hint{color:#b8c9dc}html[data-theme="dark"] .link-button{color:#79b9ff}@media(max-width:700px){.auth-preview-toggle{grid-template-columns:minmax(74px,1fr) 62px minmax(92px,1.1fr);gap:8px;padding:7px 10px}.auth-preview-toggle-hint{font-size:.76rem}.auth-preview-registration{grid-template-columns:1fr}.auth-preview-registration .route-actions,.auth-preview-check{grid-column:auto}}
 </style>
 <style id="gpcs-signin-ui-refinement">
 /* =========================================================
@@ -4389,7 +4389,6 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
     const registerBadge=routeShell.querySelector('[data-register-role-badge]');
     const registerSubmit=routeShell.querySelector('[data-register-submit]');
     let activeRole='student';
-    let otpTimer=null;
 
     const setGroupEnabled=(container,enabled)=>{
       if(!container) return;
@@ -4413,20 +4412,10 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
 
     const showRole=(role)=>{
       activeRole=role==='faculty'?'faculty':'student';
-      clearInterval(otpTimer);
       syncRoleSelector('signin');
       rolePanels.forEach(panel=>panel.hidden=panel.dataset.authPreviewPanel!==activeRole);
       if(registerPanel) registerPanel.hidden=true;
       if(resetPanel) resetPanel.hidden=true;
-    };
-
-    const showMethod=(panel,method)=>{
-      const wanted=method==='otp'?'otp':'password';
-      panel.querySelectorAll('[data-auth-method]').forEach(btn=>{
-        const active=btn.dataset.authMethod===wanted;
-        btn.classList.toggle('primary',active);
-      });
-      panel.querySelectorAll('[data-auth-method-panel]').forEach(box=>box.hidden=box.dataset.authMethodPanel!==wanted);
     };
 
     roleToggle?.addEventListener('click',()=>{
@@ -4436,11 +4425,6 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
       else showRole(next);
     });
     showRole('student');
-
-    rolePanels.forEach(panel=>{
-      panel.querySelectorAll('[data-auth-method]').forEach(btn=>btn.addEventListener('click',()=>showMethod(panel,btn.dataset.authMethod)));
-      showMethod(panel,'password');
-    });
 
     const prepareRegistration=(role,options={})=>{
       activeRole=role==='faculty'?'faculty':'student';
@@ -4491,91 +4475,19 @@ html[data-theme="dark"] .gpcs-hidden-admin-dialog p{color:#b8cae4}html[data-them
     routeShell.querySelectorAll('[data-auth-reset]').forEach(btn=>btn.addEventListener('click',()=>openReset(btn.dataset.authReset)));
     routeShell.querySelectorAll('[data-back-login]').forEach(btn=>btn.addEventListener('click',()=>showRole(activeRole)));
 
-    /* Registration preview: requested mobile/email/password checks. */
+    /* The backend bridge owns real registration/sign-in requests. These
+       handlers are a safety fallback only: if that script is unavailable,
+       never simulate success or allow password forms to fall through to a GET. */
     registerForm?.addEventListener('submit',e=>{
       e.preventDefault();
-      const enabledInputs=[...registerForm.querySelectorAll('input:not(:disabled),select:not(:disabled),textarea:not(:disabled)')];
-      const mobile=enabledInputs.find(el=>el.closest('label')?.textContent.includes('Mobile Number'));
-      const email=enabledInputs.find(el=>el.closest('label')?.textContent.includes('Email ID'));
-      const passwords=enabledInputs.filter(el=>el.type==='password');
-      const pin=enabledInputs.find(el=>el.closest('label')?.textContent.includes('Pin Code'));
-
-      const mobileValue=mobile?.value.trim()||'';
-      const emailValue=email?.value.trim()||'';
-      const pinValue=pin?.value.trim()||'';
-      if(mobile && mobileValue && !/^\d{10}$/.test(mobileValue)){
-        mobile.focus(); toast('Enter a valid 10-digit Mobile Number, or leave it blank if optional.'); return;
-      }
-      if(email && emailValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)){
-        email.focus(); toast('Enter a valid Email ID, or leave it blank if optional.'); return;
-      }
-      if(pin && pinValue && !/^\d{6}$/.test(pinValue)){
-        pin.focus(); toast('Enter a valid 6-digit Pin Code, or leave it blank if optional.'); return;
-      }
-      if(passwords.length>=2){
-        const p1=passwords[0].value;
-        const p2=passwords[1].value;
-        if(activeRole==='faculty' && ((p1 && !p2) || (!p1 && p2))){
-          (p1?passwords[1]:passwords[0]).focus();
-          toast('Enter both Password fields.'); return;
-        }
-        if(p1 && p2 && p1!==p2){
-          passwords[1].focus(); toast('Password and Confirm Password do not match.'); return;
-        }
-      }
-      if(!registerForm.checkValidity()){
-        registerForm.reportValidity(); return;
-      }
-      toast(activeRole==='faculty'
-        ? 'Faculty registration submitted successfully.'
-        : 'Student registration validated — account can now be created securely.');
-      showRole(activeRole);
+      if(!registerForm.checkValidity()){registerForm.reportValidity();return}
+      toast('Secure registration service is unavailable. Refresh the page and try again.');
     });
 
-    /* Password sign-in preview. */
     routeShell.querySelectorAll('#previewStudentPassword,#previewFacultyPassword').forEach(form=>form.addEventListener('submit',e=>{
       e.preventDefault();
       if(!form.checkValidity()){form.reportValidity();return}
-      toast(activeRole==='faculty'
-        ? 'Faculty password sign-in validated. Live system applies secure password verification and rate limiting.'
-        : 'Student password sign-in validated. Live system applies secure password verification and rate limiting.');
-    }));
-
-    /* OTP preview with expiry/resend-cooldown behavior. */
-    routeShell.querySelectorAll('#previewStudentOtp,#previewFacultyOtp').forEach(form=>form.addEventListener('submit',e=>{
-      e.preventDefault();
-      const mobile=form.querySelector('input[maxlength="10"]');
-      const otpWrap=form.querySelector('[data-otp-demo]');
-      const otp=otpWrap?.querySelector('input');
-      const sendBtn=form.querySelector('[data-otp-send]');
-
-      if(!mobile || !/^\d{10}$/.test(mobile.value.trim())){
-        mobile?.focus(); toast('Enter a valid 10-digit Mobile Number.'); return;
-      }
-
-      if(otpWrap?.hidden){
-        otpWrap.hidden=false;
-        otp?.focus();
-        let seconds=45;
-        sendBtn.disabled=true;
-        sendBtn.textContent=`Resend OTP in ${seconds}s`;
-        clearInterval(otpTimer);
-        otpTimer=setInterval(()=>{
-          seconds--;
-          if(seconds<=0){
-            clearInterval(otpTimer);
-            sendBtn.disabled=false;
-            sendBtn.textContent='Resend OTP';
-          }else sendBtn.textContent=`Resend OTP in ${seconds}s`;
-        },1000);
-        toast('OTP sent in preview — live code expires after 5 minutes and is rate-limited.');
-        return;
-      }
-
-      if(!/^\d{6}$/.test((otp?.value||'').trim())){
-        otp?.focus(); toast('Enter the 6-digit OTP.'); return;
-      }
-      toast(`${activeRole==='faculty'?'Faculty':'Student'} OTP verification flow is connected.`);
+      toast('Secure sign-in service is unavailable. Refresh the page and try again.');
     }));
 
     /* Password recovery is submitted to Laravel by gpcs-backend-bridge.js. */

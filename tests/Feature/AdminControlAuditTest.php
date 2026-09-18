@@ -205,7 +205,7 @@ class AdminControlAuditTest extends TestCase
         $this->actingAs($admin);
 
         $this->post('/admin/content/papers', [
-            'file' => UploadedFile::fake()->create('admin-paper.pdf', 100, 'application/pdf'),
+            'file' => UploadedFile::fake()->image('admin-paper.jpg', 320, 240),
             'paper_code' => 'P100',
             'subject_code' => 'S100',
             'paper_name' => 'Admin Paper',

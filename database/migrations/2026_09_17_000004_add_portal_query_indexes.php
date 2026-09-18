@@ -22,10 +22,6 @@ return new class extends Migration
             $table->index(['status', 'created_at'], 'gallery_status_created_index');
         });
 
-        Schema::table('portal_notifications', function (Blueprint $table): void {
-            $table->index(['audience', 'created_at'], 'notifications_audience_created_index');
-            $table->index(['recipient', 'created_at'], 'notifications_recipient_created_index');
-        });
     }
 
     public function down(): void
@@ -44,9 +40,5 @@ return new class extends Migration
             $table->dropIndex('gallery_status_created_index');
         });
 
-        Schema::table('portal_notifications', function (Blueprint $table): void {
-            $table->dropIndex('notifications_audience_created_index');
-            $table->dropIndex('notifications_recipient_created_index');
-        });
     }
 };

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\{
     AdminLogController,
     AdminReportController,
     AdminSettingsController,
+    AdminSubjectController,
     AdminUserController
 };
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
@@ -24,7 +25,19 @@ Route::prefix('admin')
         Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
 
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [AdminUserController::class, 'create'])->name('users.create');
+        Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
         Route::patch('/users/{user}/toggle', [AdminUserController::class, 'toggle'])->name('users.toggle');
+        Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+
+        Route::get('/subjects', [AdminSubjectController::class, 'index'])->name('subjects.index');
+        Route::get('/subjects/create', [AdminSubjectController::class, 'create'])->name('subjects.create');
+        Route::post('/subjects', [AdminSubjectController::class, 'store'])->name('subjects.store');
+        Route::get('/subjects/{subject}/edit', [AdminSubjectController::class, 'edit'])->name('subjects.edit');
+        Route::put('/subjects/{subject}', [AdminSubjectController::class, 'update'])->name('subjects.update');
+        Route::delete('/subjects/{subject}', [AdminSubjectController::class, 'destroy'])->name('subjects.destroy');
 
         Route::get('/content/{type}', [AdminContentController::class, 'index'])->name('content.index');
         Route::patch('/content/{type}/{id}/status', [AdminContentController::class, 'status'])->name('content.status');

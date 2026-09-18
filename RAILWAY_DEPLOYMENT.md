@@ -1,18 +1,36 @@
 # GPCS Portal — Railway Deployment
 
-## Builder / start command
-Railway currently defaults new services to **Railpack**. This repository includes `railway.json` with `RAILPACK` as the current builder. `Procfile` and `nixpacks.toml` are retained only for requested legacy Nixpacks compatibility.
+## Builder and start command
 
-The application start command is:
+The production web service uses **Railpack** and this repository keeps the deploy settings in `railway.json`.
 
-```bash
-php artisan serve --host=0.0.0.0 --port=$PORT
+`deploy.startCommand` is intentionally `null`. That means Railway/Railpack should use its detected Laravel start command instead of overriding it with the development server (`php artisan serve`). For the current Railpack PHP image this starts the production FrankenPHP/Caddy runtime.
+
+Railway injects the `PORT` variable automatically. The detected Railpack runtime binds the service on Railway's injected port and on all container interfaces; do not hardcode a port and do not force a localhost-only listener.
+
+The repository health check is:
+
+```text
+/up
 ```
 
-`$PORT` is supplied by Railway; do not hardcode a port. The Railway start command also sets `PHPRC=/app/php.ini` so PHP accepts the approved 100 MiB Paper / 200 MiB Notes limits (with multipart overhead). If a new Railway service ignores/deprecates Config-as-Code, put the same command in **Service → Settings → Deploy → Start Command**.
+Laravel owns this endpoint and it is intentionally outside the portal login wall so Railway can receive a `2xx` response before routing production traffic to a new deployment.
+
+## Pre-deploy command
+
+The repository runs these commands before a new release becomes active:
+
+```bash
+php artisan optimize:clear
+php artisan migrate --force
+php artisan db:seed --class=SubjectMasterSeeder --force
+```
+
+The Subject Master seeder is idempotent. Pre-deploy commands must not depend on the persistent upload volume because Railway runs them in a separate pre-deploy container.
 
 ## MySQL variables
-Add Railway's MySQL service and map the app service variables:
+
+Attach Railway's MySQL service and map the application variables:
 
 ```text
 DB_CONNECTION=mysql
@@ -23,50 +41,58 @@ DB_USERNAME=${{MySQL.MYSQLUSER}}
 DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
 ```
 
-If the database service is renamed, replace `MySQL` with its Railway service name. `config/database.php` also supports direct `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, and `MYSQLPASSWORD` fallbacks.
+If the database service is renamed, replace `MySQL` with its Railway service name. `config/database.php` also supports Railway's direct `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, and `MYSQLPASSWORD` fallbacks.
+
+The Laravel MySQL connection explicitly uses native prepared statements and disables PHP persistent PDO sockets. This keeps SQL parameterization native and avoids unmanaged persistent connections in long-lived application workers.
 
 ## Required application variables
-Set `APP_KEY` with a real Laravel key, `APP_URL` to the Railway public domain, and configure SMTP plus iLovePDF keys when those features are required. Never commit real credentials. Generate a key locally or in a trusted Laravel environment with `php artisan key:generate --show`, then paste the returned value into Railway `APP_KEY`.
 
-## Database setup
-For current Railway, configure the **Pre-deploy Command** in the service dashboard as:
+Set `APP_ENV=production`, `APP_DEBUG=false`, a real `APP_KEY`, and the public `APP_URL`. Configure SMTP and iLovePDF credentials only in Railway variables. Never commit real credentials or a production `.env` file.
+
+Generate an application key in a trusted Laravel environment with:
 
 ```bash
-php artisan migrate --force && php artisan db:seed --class=SubjectMasterSeeder --force
+php artisan key:generate --show
 ```
 
-The Subject Master seeder is idempotent and loads the verified 141-row academic database.
+## Persistent uploads
 
-
-## Persistent uploads — required
-Paper, Notes and Gallery files use Laravel's `public` filesystem disk. Railway deployment filesystems are ephemeral, so attach a **Railway Volume** to the app service at:
+Paper, Notes, Gallery, and profile files use Laravel's `public` filesystem disk. Railway deployment filesystems are ephemeral, so the web service must keep its persistent volume mounted at:
 
 ```text
 /app/storage/app/public
 ```
 
-Without this volume, uploaded files can disappear on redeploy. After the volume is attached and the first deployment is healthy, run `php artisan storage:link` once from the running service shell.
-
-## Logging
-The production example uses `LOG_CHANNEL=stderr` so Laravel logs are visible in Railway deployment logs rather than depending on ephemeral log files.
+Do not move this mount without migrating existing uploaded files first.
 
 ## Public storage link
-`storage:link` changes the deployment filesystem, so do **not** rely on it as a pre-deploy database command. After the first successful deployment, run once from Railway's service shell:
+
+If a fresh environment does not already expose `public/storage`, run this once in that running environment:
 
 ```bash
 php artisan storage:link
 ```
 
-If the symlink is already present Laravel will report that instead of recreating it.
+The link itself is deployment-filesystem state and should not be mixed into the database migration pre-deploy command.
+
+## Logging
+
+Production should use stderr-compatible Laravel logging so application exceptions are visible in Railway deployment logs rather than relying on ephemeral local log files.
 
 ## Admin bootstrap
+
 Before intentionally running `AdminSeeder`, set strong values for `ADMIN_IDENTIFIER`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` (minimum 12 characters). Then run:
 
 ```bash
 php artisan db:seed --class=AdminSeeder --force
 ```
 
-Sign in through the hidden Admin entry and change the temporary Admin credentials immediately. Remove/rotate the bootstrap environment values afterward.
+Change temporary bootstrap credentials after first use and rotate/remove bootstrap values when they are no longer required.
 
 ## Composer lock
-No fabricated `composer.lock` is included. Railway resolves dependencies during build with Composer. For reproducible future builds, generate a genuine lock file in a trusted Composer-enabled environment and commit that genuine file.
+
+A genuine `composer.lock` is committed and must remain committed. Production builds use `composer install` from the lock file so dependency versions are reproducible.
+
+## Railway Config-as-Code lifecycle
+
+Railway has deprecated legacy `railway.json` / `railway.toml` Config-as-Code for future services and documents a hard cutoff for existing Config-as-Code on **2026-12-01**. The current production service is healthy and its dashboard settings match this repository, so no risky infrastructure migration is performed automatically here. Migrate the service to Railway Infrastructure-as-Code before that cutoff and verify the generated deployment plan before applying it.

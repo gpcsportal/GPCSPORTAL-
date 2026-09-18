@@ -4,7 +4,7 @@ Production Laravel 12 portal for Government Polytechnic College, Shivpuri.
 
 ## Included modules
 - Student/Faculty registration, login, forgot-password and reset-password.
-- Hidden Admin entry with protected dashboard, moderation, notifications, reports, activity logs and account settings.
+- Hidden Admin entry with protected dashboard, moderation, reports, activity logs and account settings.
 - Paper upload with Subject Master metadata lookup and exact duplicate protection.
 - Notes upload with five mandatory academic fields: Branch, Semester, Year, Subject Name and Subject Code. Attachment is optional.
 - Gallery uploads and moderation.

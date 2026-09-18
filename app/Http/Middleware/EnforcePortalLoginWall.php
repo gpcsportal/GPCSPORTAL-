@@ -10,9 +10,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnforcePortalLoginWall
 {
-    public function handle(Request $request, Closure $next, PortalSettingsService $settings): Response
+    public function __construct(
+        private readonly PortalSettingsService $settings
+    ) {
+    }
+
+    public function handle(Request $request, Closure $next): Response
     {
-        if (! $settings->loginWallEnabled()) {
+        if (! $this->settings->loginWallEnabled()) {
             return $next($request);
         }
 

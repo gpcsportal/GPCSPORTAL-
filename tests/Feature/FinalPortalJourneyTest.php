@@ -93,11 +93,11 @@ class FinalPortalJourneyTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('file');
 
-        $file = UploadedFile::fake()->create(
-            'scripting-language.docx',
-            64,
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        );
+        // Use a real in-memory image payload for the successful write path;
+        // UploadedFile::fake()->create() can report a logical size while its
+        // temporary file remains empty, which is correctly rejected by the
+        // production post-write integrity check.
+        $file = UploadedFile::fake()->image('scripting-language.jpg', 320, 240);
 
         $response = $this->actingAs($student)
             ->postJson('/papers', [

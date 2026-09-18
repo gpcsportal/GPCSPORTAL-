@@ -22,7 +22,9 @@ class LogoutFlowTest extends TestCase
             ->get('/')
             ->assertOk()
             ->assertSee('class="gpcs-logout-btn"', false)
-            ->assertDontSee('class="gpcs-signin-btn reference-signin"', false);
+            ->assertDontSee('class="gpcs-signin-btn reference-signin"', false)
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertHeader('Pragma', 'no-cache');
 
         $this->actingAs($user)
             ->post('/logout')

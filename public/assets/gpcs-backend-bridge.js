@@ -537,6 +537,19 @@
     ensureAccessibilityShell();
     syncNavCurrent();
     ensureLoginEnhancements();
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('logged_out') === '1') {
+      toast('Logged out successfully.');
+      params.delete('logged_out');
+      const query = params.toString();
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash || '#home'}`
+      );
+    }
+
     const authenticated = await isAuthenticated();
 
     if (!authenticated) {
@@ -560,6 +573,25 @@
   else initializePortalBridge();
 
   window.addEventListener('hashchange', () => window.setTimeout(syncNavCurrent, 0));
+
+  // Browsers may restore the public SPA shell from the back/forward cache.
+  // Re-check the server-side session before a protected route is shown again.
+  window.addEventListener('pageshow', async (event) => {
+    const feature = currentRequestedFeature();
+    if (!feature) return;
+
+    if (event.persisted) {
+      document.documentElement.style.visibility = 'hidden';
+    }
+
+    const allowed = await isAuthenticated(true);
+    if (!allowed) {
+      redirectToLogin(feature);
+      return;
+    }
+
+    document.documentElement.style.visibility = '';
+  });
 
   document.addEventListener('change', async (event) => {
     if (event.target?.id !== 'previewGalleryInput') return;

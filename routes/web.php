@@ -33,6 +33,69 @@ Route::get('/', [PortalController::class, 'index'])
 Route::get('/index.php', [PortalController::class, 'index'])
     ->name('portal.legacy');
 
+Route::get('/terms', static fn () => view('legal', [
+    'title' => 'Terms & Conditions',
+    'intro' => 'These terms explain the basic rules for using the GPCS Portal as an academic resource and account-based college portal.',
+    'sections' => [
+        [
+            'heading' => 'Academic use',
+            'body' => 'Use the portal for legitimate academic and college-related purposes. Do not use it to impersonate others, disrupt service, or upload unlawful or unrelated material.',
+        ],
+        [
+            'heading' => 'Your account',
+            'items' => [
+                'Keep your login credentials private and sign out on shared devices.',
+                'Provide accurate registration information and keep it reasonably up to date.',
+                'Accounts may be suspended when needed to protect the portal, its users, or college resources.',
+            ],
+        ],
+        [
+            'heading' => 'Uploads and moderation',
+            'body' => 'Only upload material you are allowed to share. Papers, notes, images and other submissions may be reviewed, rejected or removed by portal administrators when they are duplicates, unsafe, inaccurate, unrelated or otherwise unsuitable.',
+        ],
+        [
+            'heading' => 'External resources',
+            'body' => 'The portal links to official or third-party academic services. Those services are operated separately and their own terms and availability apply.',
+        ],
+        [
+            'heading' => 'Availability',
+            'body' => 'The portal is maintained as an academic service. Features may be updated, temporarily unavailable or changed when required for maintenance, security or reliability.',
+        ],
+    ],
+]))->name('portal.terms');
+
+Route::get('/privacy', static fn () => view('legal', [
+    'title' => 'Privacy Policy',
+    'intro' => 'This page explains the information the GPCS Portal uses to provide accounts, academic resources, moderation and basic security.',
+    'sections' => [
+        [
+            'heading' => 'Information used by the portal',
+            'items' => [
+                'Registration information such as name, email, role and relevant academic details.',
+                'Optional information you choose to provide, such as mobile number, profile photo or other optional fields.',
+                'Academic uploads and their metadata, including papers, notes and gallery submissions.',
+                'Basic session, security and activity information needed to authenticate users, prevent abuse and administer the portal.',
+            ],
+        ],
+        [
+            'heading' => 'Why it is used',
+            'body' => 'Information is used to operate sign-in, account access, academic libraries, moderation, notifications, password recovery and security controls.',
+        ],
+        [
+            'heading' => 'Cookies and sessions',
+            'body' => 'The portal uses secure session cookies that are necessary to keep users signed in and protect authenticated actions. These are not advertising cookies.',
+        ],
+        [
+            'heading' => 'Public and private information',
+            'body' => 'Approved academic uploads may be visible or downloadable to signed-in portal users. Account passwords are not displayed, and personal registration information is not intentionally published as part of academic resources.',
+        ],
+        [
+            'heading' => 'External links and requests',
+            'body' => 'External websites have their own privacy practices. For correction, access or removal requests relating to portal account data, contact the portal administrator or college through the available contact channel.',
+        ],
+    ],
+]))->name('portal.privacy');
+
 Route::get('/auth/status', static function (Request $request) {
     $user = $request->user();
 

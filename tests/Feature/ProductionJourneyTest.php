@@ -38,7 +38,7 @@ class ProductionJourneyTest extends TestCase
         ])->assertOk()->assertJson(['redirect' => '/#upload']);
 
         $upload = $this->postJson('/papers', [
-            'file' => UploadedFile::fake()->create('computer-networks.pdf', 120, 'application/pdf'),
+            'file' => UploadedFile::fake()->createWithContent('computer-networks.pdf', "%PDF-1.4\n".str_repeat('paper-content-', 256)),
             'paper_code' => 'TEST-403',
             'subject_code' => '403',
             'paper_name' => 'Computer Networks',
@@ -101,7 +101,7 @@ class ProductionJourneyTest extends TestCase
             'subject_code' => '302',
             'title' => 'Unit 1 Notes',
             'description' => 'Production journey test notes.',
-            'attachment' => UploadedFile::fake()->create('unit-1.pdf', 120, 'application/pdf'),
+            'attachment' => UploadedFile::fake()->createWithContent('unit-1.pdf', "%PDF-1.4\n".str_repeat('notes-content-', 256)),
         ])->assertCreated();
 
         $note = Note::findOrFail($upload->json('id'));

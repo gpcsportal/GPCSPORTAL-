@@ -25,6 +25,7 @@
 <a href="{{ route('admin.content.index','papers') }}">Papers</a>
 <a href="{{ route('admin.content.index','notes') }}">Notes</a>
 <a href="{{ route('admin.content.index','gallery') }}">Gallery</a>
+<a href="{{ route('admin.subjects.index') }}">Subjects</a>
 <a href="{{ route('admin.settings.edit') }}">Settings</a>
 <a href="{{ route('admin.reports.index') }}">Reports</a>
 <a href="{{ route('admin.logs.index') }}">Logs</a>

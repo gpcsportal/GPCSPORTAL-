@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PortalNotification;
 use App\Services\AdminActivityService;
+use App\Support\SafePortalRedirect;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -41,11 +42,21 @@ class AdminNotificationController extends Controller
                     $link = trim((string) $value);
 
                     if (str_starts_with($link, '/')) {
+                        if (SafePortalRedirect::sanitize($link, '') !== $link) {
+                            $fail('The notice link must be a safe internal portal path.');
+                        }
+
                         return;
                     }
 
-                    if (! filter_var($link, FILTER_VALIDATE_URL) || ! str_starts_with(strtolower($link), 'https://')) {
-                        $fail('The notice link must be a relative portal path or a valid HTTPS URL.');
+                    $parts = parse_url($link);
+                    if (
+                        ! filter_var($link, FILTER_VALIDATE_URL)
+                        || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+                        || isset($parts['user'])
+                        || isset($parts['pass'])
+                    ) {
+                        $fail('The notice link must be a safe internal portal path or a valid HTTPS URL.');
                     }
                 },
             ],

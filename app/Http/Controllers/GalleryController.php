@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GalleryImage;
 use App\Services\FileCompressionService;
 use App\Services\UploadStorageService;
+use App\Services\PortalSettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -34,7 +35,7 @@ class GalleryController extends Controller
         UploadStorageService $storageCapacity
     )
     {
-        $maxKilobytes = config('gpcs_uploads.gallery_max_mb', 20) * 1024;
+        $maxKilobytes = app(PortalSettingsService::class)->galleryMaxMb() * 1024;
 
         $validated = $request->validate([
             'image' => ['required', 'image', 'max:'.$maxKilobytes],

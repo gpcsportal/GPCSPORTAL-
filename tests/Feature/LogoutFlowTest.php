@@ -21,8 +21,8 @@ class LogoutFlowTest extends TestCase
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertSee('Logout')
-            ->assertDontSee('GPCS Sign In');
+            ->assertSee('class="gpcs-logout-btn"', false)
+            ->assertDontSee('class="gpcs-signin-btn reference-signin"', false);
 
         $this->actingAs($user)
             ->post('/logout')

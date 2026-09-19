@@ -17,7 +17,7 @@
     "ext-mbstring": "*",
     "ext-pdo_mysql": "*",
     "laravel/framework": "^12.0",
-    "laravel/tinker": "^2.10",
+    "laravel/tinker": "^3.0",
     "intervention/image": "^3.11",
     "ilovepdf/ilovepdf-php": "^1.4"
   },

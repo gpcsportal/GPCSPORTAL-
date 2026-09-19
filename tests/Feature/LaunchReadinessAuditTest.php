@@ -59,6 +59,49 @@ class LaunchReadinessAuditTest extends TestCase
         $this->assertStringContainsString('reference-hero-shell', $template);
     }
 
+    public function test_mobile_chrome_and_safari_user_agents_receive_the_portal_without_redirects(): void
+    {
+        $androidChrome = 'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36';
+        $iphoneSafari = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
+
+        foreach ([$androidChrome, $iphoneSafari] as $userAgent) {
+            $response = $this->withHeader('User-Agent', $userAgent)
+                ->get('/')
+                ->assertOk();
+
+            $cacheControl = (string) $response->headers->get('Cache-Control');
+            $this->assertStringContainsString('no-cache', $cacheControl);
+            $this->assertStringContainsString('must-revalidate', $cacheControl);
+
+            $this->withHeader('User-Agent', $userAgent)
+                ->getJson('/auth/status')
+                ->assertOk()
+                ->assertJsonStructure(['authenticated', 'role']);
+        }
+    }
+
+    public function test_mobile_runtime_has_no_service_worker_or_user_agent_blocking_logic(): void
+    {
+        $template = (string) file_get_contents(resource_path('views/portal.blade.php'));
+        $bridge = (string) file_get_contents(public_path('assets/gpcs-backend-bridge.js'));
+
+        $this->assertStringContainsString('width=device-width, initial-scale=1, viewport-fit=cover', $template);
+        $this->assertStringContainsString('/assets/gpcs-responsive.css?v=20260919-mobile-access', $bridge);
+
+        foreach ([
+            'navigator.serviceWorker',
+            'serviceWorker.register',
+            'beforeinstallprompt',
+            'navigator.userAgent',
+            'userAgent.includes',
+            'iPhone',
+            'Android',
+        ] as $blockedPattern) {
+            $this->assertStringNotContainsString($blockedPattern, $template);
+            $this->assertStringNotContainsString($blockedPattern, $bridge);
+        }
+    }
+
     public function test_suspended_account_gets_clean_json_auth_failure_and_is_logged_out(): void
     {
         $user = User::create($this->userAttributes([

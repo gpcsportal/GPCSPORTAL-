@@ -30,7 +30,7 @@
     document.head.appendChild(stylesheet);
   };
   ensureStylesheet('/assets/gpcs-audit-fixes.css?v=20260918-final', 'gpcs-audit-fixes');
-  ensureStylesheet('/assets/gpcs-responsive.css', 'gpcs-responsive');
+  ensureStylesheet('/assets/gpcs-responsive.css?v=20260919-mobile-access', 'gpcs-responsive');
 
   const ensureAccessibilityShell = () => {
     const main = document.querySelector('main');

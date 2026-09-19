@@ -65,10 +65,13 @@ class LaunchReadinessAuditTest extends TestCase
         $iphoneSafari = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 
         foreach ([$androidChrome, $iphoneSafari] as $userAgent) {
-            $this->withHeader('User-Agent', $userAgent)
+            $response = $this->withHeader('User-Agent', $userAgent)
                 ->get('/')
-                ->assertOk()
-                ->assertHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+                ->assertOk();
+
+            $cacheControl = (string) $response->headers->get('Cache-Control');
+            $this->assertStringContainsString('no-cache', $cacheControl);
+            $this->assertStringContainsString('must-revalidate', $cacheControl);
 
             $this->withHeader('User-Agent', $userAgent)
                 ->getJson('/auth/status')

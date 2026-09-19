@@ -48,6 +48,12 @@ class SecurityHeaders
         ) {
             $response->headers->set('Cache-Control', 'no-store, private');
             $response->headers->set('Pragma', 'no-cache');
+        } elseif ($request->is('/') || $request->is('index.php')) {
+            // The public SPA shell changes independently from static assets.
+            // Force browsers (especially long-lived mobile tabs) to revalidate
+            // the HTML so stale route guards / asset URLs are not reused.
+            $response->headers->set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+            $response->headers->set('Pragma', 'no-cache');
         }
 
         return $response;

@@ -54,6 +54,79 @@ class AuthGateReturnTest extends TestCase
         $this->assertAuthenticated();
     }
 
+    public function test_registered_account_can_relogin_after_logout_even_with_wrong_role_hint(): void
+    {
+        $this->postJson('/register', [
+            'role' => 'student',
+            'name' => 'Cross',
+            'surname' => 'Device',
+            'gender' => 'Male',
+            'college_name' => 'Government Polytechnic College Shivpuri',
+            'email' => '  CrossDevice@Example.COM  ',
+            'mobile' => '9876500099',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'address' => 'Shivpuri',
+            'college_year' => 'First Year',
+            'branch' => 'CS',
+            'semester' => 'I',
+            'terms_accepted' => '1',
+        ])->assertCreated()->assertJson([
+            'role' => 'student',
+        ]);
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'crossdevice@example.com',
+            'role' => 'student',
+            'is_active' => 1,
+        ]);
+
+        $this->post('/logout')->assertRedirect('/?logged_out=1#home');
+        $this->assertGuest();
+
+        // Simulates another device/browser selecting the wrong role UI.
+        // Stored account role must be authoritative.
+        $this->postJson('/login', [
+            'email' => '  CROSSDEVICE@EXAMPLE.COM ',
+            'password' => 'password123',
+            'role' => 'faculty',
+        ])->assertOk()->assertJson([
+            'role' => 'student',
+            'redirect' => '/#student-dashboard',
+        ]);
+
+        $this->assertAuthenticated();
+    }
+
+    public function test_portal_login_does_not_allow_admin_account(): void
+    {
+        User::create($this->userAttributes([
+            'email' => 'admin-public-login@example.com',
+            'role' => 'admin',
+            'admin_identifier' => 'admin-public-login',
+        ]));
+
+        $this->postJson('/login', [
+            'email' => 'admin-public-login@example.com',
+            'password' => 'password123',
+            'role' => 'student',
+        ])->assertUnprocessable();
+
+        $this->assertGuest();
+    }
+
+    public function test_csrf_refresh_endpoint_is_available_and_not_cacheable(): void
+    {
+        $response = $this->getJson('/auth/csrf')
+            ->assertOk()
+            ->assertJsonStructure(['token']);
+
+        $this->assertNotEmpty($response->json('token'));
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('no-store', $cacheControl);
+    }
+
     public function test_external_login_redirect_is_rejected(): void
     {
         User::create($this->userAttributes([

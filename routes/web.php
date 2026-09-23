@@ -106,6 +106,11 @@ Route::get('/auth/status', static function (Request $request) {
     ]);
 })->middleware('throttle:120,1')->name('portal.auth-status');
 
+
+Route::get('/auth/csrf', static fn () => response()->json([
+    'token' => csrf_token(),
+]))->middleware('throttle:120,1')->name('portal.csrf');
+
 Route::post('/login', [PortalAuthController::class, 'login'])
     ->middleware('throttle:10,1')
     ->name('portal.login');

@@ -10,7 +10,9 @@ use App\Services\PortalSettingsService;
 use App\Support\SafePortalRedirect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use RuntimeException;
 use Throwable;
@@ -19,38 +21,47 @@ class PortalAuthController extends Controller
 {
     public function login(Request $request)
     {
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
+
         $validated = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', Rule::in(['student', 'faculty'])],
+            // Role selection is only a UI hint. The stored account role is the
+            // source of truth so valid credentials work from any device even
+            // if Student/Faculty is not preselected correctly.
+            'role' => ['nullable', Rule::in(['student', 'faculty'])],
             'remember' => ['sometimes', 'boolean'],
             'redirect' => ['nullable', 'string', 'max:2048'],
         ]);
 
         $remember = (bool) ($validated['remember'] ?? false);
 
-        if (! Auth::attempt([
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-            'role' => $validated['role'],
-            'is_active' => true,
-        ], $remember)) {
+        $user = User::query()
+            ->whereRaw('LOWER(email) = ?', [$validated['email']])
+            ->whereIn('role', ['student', 'faculty'])
+            ->where('is_active', true)
+            ->first();
+
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return response()->json([
-                'message' => 'Invalid credentials, role, or account is not active.',
+                'message' => 'Invalid email or password, or this account is not active.',
             ], 422);
         }
 
+        Auth::login($user, $remember);
         $request->session()->regenerate();
-        $request->user()->forceFill(['last_login_at' => now()])->save();
+        $user->forceFill(['last_login_at' => now()])->save();
 
-        $fallback = $this->redirectForRole($request->user()->role);
+        $fallback = $this->redirectForRole($user->role);
         $intended = $validated['redirect'] ?? $request->session()->pull('url.intended');
         $redirect = SafePortalRedirect::sanitize($intended, $fallback);
         $request->session()->forget('url.intended');
 
         return response()->json([
             'message' => 'Signed in successfully.',
-            'role' => $request->user()->role,
+            'role' => $user->role,
             'redirect' => $redirect,
         ]);
     }
@@ -61,6 +72,10 @@ class PortalAuthController extends Controller
         UploadStorageService $storageCapacity
     )
     {
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
+
         $role = $request->input('role');
 
         $rules = [

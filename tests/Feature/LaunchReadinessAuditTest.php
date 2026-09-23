@@ -102,6 +102,18 @@ class LaunchReadinessAuditTest extends TestCase
         }
     }
 
+    public function test_auth_bridge_recovers_stale_csrf_and_does_not_bind_login_to_role_toggle(): void
+    {
+        $bridge = (string) file_get_contents(public_path('assets/gpcs-backend-bridge.js'));
+        $template = (string) file_get_contents(resource_path('views/portal.blade.php'));
+
+        $this->assertStringContainsString('refreshCsrfToken', $bridge);
+        $this->assertStringContainsString('__csrfRetried', $bridge);
+        $this->assertStringContainsString('routes.csrf', $bridge);
+        $this->assertStringNotContainsString("role:id.includes('Faculty')", $bridge);
+        $this->assertStringContainsString('20260923-auth-fix', $template);
+    }
+
     public function test_suspended_account_gets_clean_json_auth_failure_and_is_logged_out(): void
     {
         $user = User::create($this->userAttributes([

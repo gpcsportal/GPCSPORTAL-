@@ -1,7 +1,7 @@
 (() => {
   const cfg = window.GPCS_BACKEND || {};
   const routes = cfg.routes || {};
-  const csrf = cfg.csrf || '';
+  let csrf = cfg.csrf || '';
   const toast = (message) => { if (typeof window.toast === 'function') window.toast(message); else alert(message); };
   const AUTH_REASON = 'Ye dekhne ke liye pehle sign in karein.';
   const INTENDED_KEY = 'gpcs:intended';
@@ -69,8 +69,32 @@
     }
   };
 
+  const refreshCsrfToken = async () => {
+    const res = await fetch(normalizeRequestUrl(routes.csrf || '/auth/csrf'), {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+
+    if (!res.ok) throw new Error('Unable to refresh the secure session. Please reload the page.');
+
+    const body = await res.json().catch(() => ({}));
+    if (!body.token) throw new Error('Unable to refresh the secure session. Please reload the page.');
+
+    csrf = body.token;
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) meta.setAttribute('content', csrf);
+    return csrf;
+  };
+
   const request = async (url, options = {}) => {
-    const headers = new Headers(options.headers || {});
+    const retryingCsrf = options.__csrfRetried === true;
+    const fetchOptions = { ...options };
+    delete fetchOptions.__csrfRetried;
+    delete fetchOptions.timeoutMs;
+
+    const headers = new Headers(fetchOptions.headers || {});
     headers.set('X-CSRF-TOKEN', csrf);
     headers.set('Accept', 'application/json');
 
@@ -80,10 +104,10 @@
     let res;
     try {
       res = await fetch(normalizeRequestUrl(url), {
-        ...options,
+        ...fetchOptions,
         headers,
-        credentials: options.credentials || 'same-origin',
-        signal: options.signal || controller.signal,
+        credentials: fetchOptions.credentials || 'same-origin',
+        signal: fetchOptions.signal || controller.signal,
       });
     } catch (error) {
       if (error?.name === 'AbortError') {
@@ -107,7 +131,11 @@
         throw new Error('The selected file is larger than the server upload limit.');
       }
       if (res.status === 419) {
-        throw new Error('Your secure session expired. Refresh the page and try again.');
+        if (!retryingCsrf && routes.csrf) {
+          await refreshCsrfToken();
+          return request(url, { ...options, __csrfRetried: true });
+        }
+        throw new Error('Your secure session expired. Please reload the page and try again.');
       }
       if (res.status === 429) {
         throw new Error('Too many requests. Please wait a moment and try again.');
@@ -428,7 +456,7 @@
         const els = inputs(form,'input'); const email=els.find(x=>x.type==='email')?.value||''; const password=els.find(x=>x.type==='password')?.value||'';
         const remember=form.querySelector('input[name="remember"]')?.checked===true;
         const redirect=readIntended();
-        const body=await submitJson(routes.login,{email,password,role:id.includes('Faculty')?'faculty':'student',remember,redirect});
+        const body=await submitJson(routes.login,{email:email.trim().toLowerCase(),password,remember,redirect});
         toast(body.message);
         authSnapshot=true;
         clearIntended();

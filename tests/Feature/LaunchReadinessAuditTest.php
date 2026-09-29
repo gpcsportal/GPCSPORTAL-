@@ -111,7 +111,38 @@ class LaunchReadinessAuditTest extends TestCase
         $this->assertStringContainsString('__csrfRetried', $bridge);
         $this->assertStringContainsString('routes.csrf', $bridge);
         $this->assertStringNotContainsString("role:id.includes('Faculty')", $bridge);
-        $this->assertStringContainsString('20260923-auth-fix', $template);
+        $this->assertStringContainsString('20260929-ui-polish', $template);
+    }
+
+    public function test_ui_polish_keeps_login_and_admin_structure_stable(): void
+    {
+        $template = (string) file_get_contents(resource_path('views/portal.blade.php'));
+        $bridge = (string) file_get_contents(public_path('assets/gpcs-backend-bridge.js'));
+        $adminLayout = (string) file_get_contents(resource_path('views/admin/layout.blade.php'));
+
+        // UPDATED: browser credential hints improve reliability without changing login structure.
+        $this->assertStringContainsString('id="previewStudentPassword"', $template);
+        $this->assertStringContainsString('id="previewFacultyPassword"', $template);
+        $this->assertStringContainsString('autocomplete="email"', $template);
+        $this->assertStringContainsString('autocomplete="current-password"', $template);
+        $this->assertStringContainsString('autocomplete="new-password"', $template);
+
+        // UPDATED: existing submit lock is now exposed accessibly.
+        $this->assertStringContainsString("form.setAttribute('aria-busy', 'true')", $bridge);
+        $this->assertStringContainsString("submitter.setAttribute('aria-disabled', 'true')", $bridge);
+
+        // UPDATED: Admin nav labels/order remain untouched while styling is centralized.
+        $expectedOrder = ['Dashboard', 'Users', 'Papers', 'Notes', 'Gallery', 'Messages', 'Subjects', 'Settings', 'Reports', 'Logs', 'Account'];
+        $cursor = -1;
+        foreach ($expectedOrder as $label) {
+            $position = strpos($adminLayout, '>'.$label.'</a>', $cursor + 1);
+            $this->assertNotFalse($position, 'Missing or reordered Admin navigation item: '.$label);
+            $this->assertGreaterThan($cursor, $position);
+            $cursor = $position;
+        }
+
+        $this->assertStringContainsString('--admin-primary:#0a2558', $adminLayout);
+        $this->assertStringContainsString('form.dataset.submitting', $adminLayout);
     }
 
     public function test_suspended_account_gets_clean_json_auth_failure_and_is_logged_out(): void

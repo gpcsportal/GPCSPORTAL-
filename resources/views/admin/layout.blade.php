@@ -14,6 +14,56 @@
 @media(max-width:360px){.wrap{width:calc(100% - 14px)}.card{padding:12px}}
 @media(min-width:1280px){.wrap{width:min(calc(100% - 48px),1200px)}header{padding-inline:max(18px,calc((100vw - 1240px)/2))}}
 @media print{header,button,.btn{display:none!important}.wrap{width:100%;max-width:none;padding:0}.card{border:0;box-shadow:none}body{background:#fff;color:#000}table{min-width:0}}
+
+/* UPDATED: centralized institutional palette and interaction polish; dimensions/layout unchanged. */
+:root{
+  --admin-primary:#0a2558;
+  --admin-primary-hover:#12366f;
+  --admin-accent:#1268e8;
+  --admin-accent-hover:#0f5fcf;
+  --admin-bg:#f5f8fc;
+  --admin-surface:#ffffff;
+  --admin-text:#142b4a;
+  --admin-muted:#63758f;
+  --admin-line:#dbe4ef;
+  --admin-line-soft:#e6edf5;
+  --admin-success-bg:#e8f7ee;
+  --admin-success:#176b36;
+  --admin-error-bg:#fff1f2;
+  --admin-error:#9f1239;
+  --admin-danger:#b42318;
+  --admin-danger-hover:#8f1c13;
+  --admin-focus:#67a6ff;
+  --admin-shadow:0 8px 22px rgba(15,42,80,.055);
+}
+body{background:var(--admin-bg);color:var(--admin-text)}
+header{background:var(--admin-primary)}
+header a,button,.btn,input,select,textarea{transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,opacity .16s ease}
+.card{background:var(--admin-surface);border-color:var(--admin-line);box-shadow:var(--admin-shadow)}
+th{background:#f8fbff;color:#294868;font-size:.78rem;letter-spacing:.015em;font-weight:800}
+tbody tr:hover td{background:#fbfdff}
+th,td{border-bottom-color:var(--admin-line-soft)}
+button,.btn{background:var(--admin-accent)}
+button:hover,.btn:hover{background:var(--admin-accent-hover)}
+.danger,.logout-btn{background:var(--admin-danger)}
+.danger:hover,.danger:focus-visible,.logout-btn:hover,.logout-btn:focus-visible{background:var(--admin-danger-hover)}
+.muted{color:var(--admin-muted)}
+.status{background:#eef3f8;color:#3a526d}
+input,select,textarea{background:#fff;color:var(--admin-text);border-color:#ccd8e8}
+input:hover,select:hover,textarea:hover{border-color:#aec3dd}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--admin-accent);box-shadow:0 0 0 3px rgba(18,104,232,.14)}
+.flash{background:var(--admin-success-bg);color:var(--admin-success);border:1px solid rgba(23,107,54,.12)}
+.flash.error{background:var(--admin-error-bg);color:var(--admin-error);border-color:#fecdd3}
+button:disabled,.btn[aria-disabled="true"]{opacity:.58;cursor:not-allowed;box-shadow:none}
+form[aria-busy="true"] button[type="submit"]{cursor:progress}
+:focus-visible{outline:3px solid var(--admin-focus);outline-offset:2px}
+.table-wrap{scrollbar-color:#a9bdd6 transparent;scrollbar-width:thin}
+.table-wrap::-webkit-scrollbar{height:8px}
+.table-wrap::-webkit-scrollbar-thumb{background:#a9bdd6;border-radius:999px}
+.table-wrap::-webkit-scrollbar-track{background:transparent}
+@media(prefers-reduced-motion:reduce){
+  header a,button,.btn,input,select,textarea{transition:none}
+}
 </style>
 </head>
 <body>
@@ -38,10 +88,33 @@
 @yield('content')
 </main>
 <script>
+/* UPDATED: preserve the existing BFCache logout protection. */
 window.addEventListener('pageshow', function (event) {
     if (event.persisted) {
         document.documentElement.style.visibility = 'hidden';
         window.location.reload();
+    }
+});
+
+/* UPDATED: prevent accidental double-submit without changing any form action or button position. */
+document.addEventListener('submit', function (event) {
+    if (event.defaultPrevented) return;
+
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    if (form.dataset.submitting === '1') {
+        event.preventDefault();
+        return;
+    }
+
+    form.dataset.submitting = '1';
+    form.setAttribute('aria-busy', 'true');
+
+    const submitter = event.submitter;
+    if (submitter instanceof HTMLButtonElement) {
+        submitter.disabled = true;
+        submitter.setAttribute('aria-disabled', 'true');
     }
 });
 </script>

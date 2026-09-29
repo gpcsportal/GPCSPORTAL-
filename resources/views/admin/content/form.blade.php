@@ -3,7 +3,8 @@
 @section('content')
 <h1>{{ $item->exists ? 'Edit '.ucfirst($type) : 'Add '.ucfirst($type) }}</h1>
 <div class="card">
-@if($errors->any())<div class="flash" style="background:#fff1f2;color:#9f1239"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+{{-- UPDATED: semantic error state; position and hierarchy unchanged. --}}
+@if($errors->any())<div class="flash error" role="alert"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 <form method="POST" enctype="multipart/form-data" action="{{ $item->exists ? route('admin.content.update',[$type,$item->id]) : route('admin.content.store',$type) }}">
 @csrf @if($item->exists) @method('PUT') @endif
 

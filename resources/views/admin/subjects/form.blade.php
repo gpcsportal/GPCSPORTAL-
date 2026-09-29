@@ -3,7 +3,8 @@
 @section('content')
 <h1>{{ $subject->exists ? 'Edit Master Subject' : 'Add Master Subject' }}</h1>
 <div class="card">
-@if($errors->any())<div class="flash" style="background:#fff1f2;color:#9f1239"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+{{-- UPDATED: semantic error state; position and hierarchy unchanged. --}}
+@if($errors->any())<div class="flash error" role="alert"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 <form method="POST" action="{{ $subject->exists ? route('admin.subjects.update',$subject) : route('admin.subjects.store') }}">
 @csrf @if($subject->exists) @method('PUT') @endif
 <div class="grid">

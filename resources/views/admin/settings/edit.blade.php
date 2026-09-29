@@ -4,7 +4,8 @@
 <h1>Portal Settings</h1>
 <div class="card">
 <p class="muted">Changes below are stored in the database and apply on the next request without a code redeploy. Safe upload ceilings remain Paper 100 MB, Notes 200 MB and Gallery 20 MB.</p>
-@if($errors->any())<div class="flash" style="background:#fff1f2;color:#9f1239"><strong>Please fix:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+{{-- UPDATED: semantic error state; position and hierarchy unchanged. --}}
+@if($errors->any())<div class="flash error" role="alert"><strong>Please fix:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 <form method="POST" action="{{ route('admin.settings.update') }}">
 @csrf @method('PUT')
 <div class="grid">

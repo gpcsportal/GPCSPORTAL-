@@ -450,7 +450,12 @@
     }
 
     const submitter = event.submitter;
-    if (submitter instanceof HTMLButtonElement) submitter.disabled = true;
+    /* UPDATED: expose the existing submit lock to assistive tech without changing form flow. */
+    form.setAttribute('aria-busy', 'true');
+    if (submitter instanceof HTMLButtonElement) {
+      submitter.disabled = true;
+      submitter.setAttribute('aria-disabled', 'true');
+    }
     try {
       if (id === 'previewStudentPassword' || id === 'previewFacultyPassword') {
         const els = inputs(form,'input'); const email=els.find(x=>x.type==='email')?.value||''; const password=els.find(x=>x.type==='password')?.value||'';
@@ -505,7 +510,14 @@
       }
       toast(e.message || 'Unable to complete the request.');
     }
-    finally { if (submitter instanceof HTMLButtonElement) submitter.disabled = false; }
+    finally {
+      /* UPDATED: always restore the exact same button after success/error handling. */
+      form.removeAttribute('aria-busy');
+      if (submitter instanceof HTMLButtonElement) {
+        submitter.disabled = false;
+        submitter.removeAttribute('aria-disabled');
+      }
+    }
   }, true);
 
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));

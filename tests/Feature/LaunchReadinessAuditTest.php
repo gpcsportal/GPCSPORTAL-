@@ -20,11 +20,12 @@ class LaunchReadinessAuditTest extends TestCase
         $template = (string) file_get_contents(resource_path('views/portal.blade.php'));
         $bridge = (string) file_get_contents(public_path('assets/gpcs-backend-bridge.js'));
 
-        $this->assertStringContainsString('reference-home-hero', $template);
+        $this->assertStringContainsString("@include('college.hero')", $template);
         $this->assertStringContainsString('reference-stat-strip', $template);
         $this->assertStringContainsString('reference-dashboard-grid', $template);
         $this->assertStringContainsString('reference-footer', $template);
-        $this->assertStringContainsString('/assets/gpcs-embedded-81b2403e96e1.png?v=20260918-campus-restore', $template);
+        $this->assertStringContainsString('/assets/gpcs-campus.webp', (string) file_get_contents(resource_path('views/college/hero.blade.php')));
+        $this->assertFileExists(public_path('assets/gpcs-campus.webp'));
 
         foreach ([
             'Latest college notices',
@@ -55,8 +56,8 @@ class LaunchReadinessAuditTest extends TestCase
         $this->assertStringContainsString('@media (min-width:600px) and (max-width:1024px)', $responsive);
         $this->assertStringContainsString('@media (min-width:1280px)', $responsive);
         $this->assertStringContainsString('body{overflow-x:clip}', $responsive);
-        $this->assertStringContainsString('@media(max-width:680px)', $template);
-        $this->assertStringContainsString('reference-hero-shell', $template);
+        $this->assertStringContainsString('@media(max-width:680px)', (string) file_get_contents(public_path('assets/gpcs-portal.css')));
+        $this->assertStringContainsString('college-hero-grid', (string) file_get_contents(public_path('assets/gpcs-college.css')));
     }
 
     public function test_mobile_chrome_and_safari_user_agents_receive_the_portal_without_redirects(): void

@@ -217,3 +217,8 @@ Route::middleware(['auth', 'account.active'])->group(function (): void {
 });
 
 require __DIR__.'/admin.php';
+
+// Public college information; existing portal APIs and login wall are unchanged.
+Route::get('/sitemap.xml', [\App\Http\Controllers\CollegeController::class, 'sitemap'])->name('college.sitemap');
+Route::get('/programmes/{programme}', [\App\Http\Controllers\CollegeController::class, 'programme'])->where('programme', 'cs|me|ee|et')->name('college.programme');
+Route::get('/{page}', [\App\Http\Controllers\CollegeController::class, 'page'])->where('page', 'about|departments|admissions|faculty|facilities|placements|notices|gallery|contact|faq')->name('college.page');

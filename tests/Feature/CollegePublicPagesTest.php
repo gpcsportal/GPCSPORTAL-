@@ -32,7 +32,7 @@ class CollegePublicPagesTest extends TestCase
 
     public function test_http_preview_assets_are_not_forced_to_https_but_secure_requests_are(): void
     {
-        $plain = $this->get('/about')->assertOk();
+        $plain = $this->get('http://localhost/about')->assertOk();
         $this->assertStringNotContainsString('upgrade-insecure-requests', (string) $plain->headers->get('Content-Security-Policy'));
         $secure = $this->get('https://localhost/about')->assertOk();
         $this->assertStringContainsString('upgrade-insecure-requests', (string) $secure->headers->get('Content-Security-Policy'));

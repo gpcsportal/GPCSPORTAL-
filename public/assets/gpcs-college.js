@@ -24,10 +24,11 @@
   const search = document.getElementById('college-search-input');
   const results = document.querySelector('.college-search-results');
   const pages = [['Admissions & Fees','/admissions'],['Programmes & Departments','/departments'],['About the College','/about'],['Faculty','/faculty'],['Campus Facilities','/facilities'],['Placements & Careers','/placements'],['Notices & Timetable','/notices'],['Campus Gallery','/gallery'],['Contact & Campus Map','/contact'],['Frequently Asked Questions','/faq'],['Computer Science','/programmes/cs'],['Mechanical Engineering','/programmes/me'],['Electrical Engineering','/programmes/ee'],['Electronics & Telecommunication','/programmes/et']];
+  const activeProgrammes = new Set((dialog?.dataset.activeProgrammes || '').split(','));
   function renderSearch() {
     if (!search || !results) return;
     results.replaceChildren();
-    const matches = pages.filter(([title]) => title.toLowerCase().includes(search.value.trim().toLowerCase()));
+    const matches = pages.filter(([title, href]) => (!href.startsWith('/programmes/') || activeProgrammes.has(href.split('/').pop())) && title.toLowerCase().includes(search.value.trim().toLowerCase()));
     if (!matches.length) { const p = document.createElement('p'); p.textContent = 'No matching pages. Try another term or contact the college.'; results.append(p); }
     matches.forEach(([title, href]) => { const a = document.createElement('a'); a.href = href; a.textContent = title; a.setAttribute('data-gpcs-public-link',''); results.append(a); });
   }

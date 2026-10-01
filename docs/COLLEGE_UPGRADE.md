@@ -128,4 +128,6 @@ The readable compatibility stylesheet is `resources/css/gpcs-portal.css`; regene
 
 Dependency security: CI identified [GHSA-97jj-33gv-5xf9](https://github.com/thephpleague/commonmark/security/advisories/GHSA-97jj-33gv-5xf9) and [GHSA-3q6v-r5mr-hxv8](https://github.com/thephpleague/commonmark/security/advisories/GHSA-3q6v-r5mr-hxv8) affecting the original CommonMark 2.10.1 dependency. The compatible patch update locks CommonMark 2.10.3 and symfony/polyfill-php80 1.43.0; Composer audit reports no advisories. This does not establish that the portal was previously exploited.
 
-WebKit CI identified fixed ambient decorations extending outside the viewport. Their bounds are now constrained without changing any interactive control placement.
+WebKit CI exposed that the existing CSP upgraded assets to HTTPS even on a plain HTTP development server. Apply `upgrade-insecure-requests` only to secure requests; production HTTPS retains the directive. Ambient decorations are also bounded inside the viewport.
+
+Additional isolated-browser checks: all 11 Admin sections returned 200 and passed automated WCAG A/AA scans. Admin current-page row filtering and sorting were exercised successfully using disposable SQLite QA accounts. Student and Faculty Sign In scans passed at both 360 and 1440 px. No production accounts or credentials were used.

@@ -30,6 +30,14 @@ class CollegePublicPagesTest extends TestCase
         $this->get('/api/gallery')->assertUnauthorized();
     }
 
+    public function test_http_preview_assets_are_not_forced_to_https_but_secure_requests_are(): void
+    {
+        $plain = $this->get('/about')->assertOk();
+        $this->assertStringNotContainsString('upgrade-insecure-requests', (string) $plain->headers->get('Content-Security-Policy'));
+        $secure = $this->get('https://localhost/about')->assertOk();
+        $this->assertStringContainsString('upgrade-insecure-requests', (string) $secure->headers->get('Content-Security-Policy'));
+    }
+
     public function test_home_keeps_existing_resource_controls_and_correct_main_landmark(): void
     {
         $response = $this->get('/');

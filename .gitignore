@@ -10,3 +10,7 @@
 /bootstrap/cache/*.php
 .phpunit.result.cache
 .DS_Store
+
+/database/*.sqlite
+/qa-artifacts/
+/tools/college-qa/node_modules/

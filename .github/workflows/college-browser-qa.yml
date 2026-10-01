@@ -1,0 +1,45 @@
+name: College browser QA
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      APP_KEY: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+      APP_URL: http://127.0.0.1:8000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/browser.sqlite
+      CACHE_STORE: array
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: curl, fileinfo, gd, mbstring, pdo_mysql, pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: npm ci --prefix tools/college-qa
+      - run: cd tools/college-qa && npx playwright install --with-deps chromium firefox webkit
+      - name: Prepare isolated preview
+        run: |
+          touch .env database/browser.sqlite
+          php artisan migrate --force
+          php artisan serve --host=127.0.0.1 --port=8000 > /tmp/gpcs-server.log 2>&1 &
+          for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/up && break || sleep 1; done
+      - run: node tools/college-qa/audit.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: college-browser-report
+          path: qa-artifacts/

@@ -1,0 +1,12 @@
+{
+  "name": "gpcs-college-qa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Development-only browser verification; no client dependencies.",
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "playwright": "1.61.1",
+    "clean-css": "5.3.3",
+    "purgecss": "8.0.0"
+  }
+}

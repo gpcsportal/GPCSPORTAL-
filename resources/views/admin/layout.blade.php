@@ -65,8 +65,10 @@ form[aria-busy="true"] button[type="submit"]{cursor:progress}
   header a,button,.btn,input,select,textarea{transition:none}
 }
 </style>
+<script src="/assets/gpcs-college.js?v=20261001" defer></script>
+<style>.college-table-sort{background:transparent;color:#294868;padding:0;min-height:24px;justify-content:flex-start}.college-table-sort:hover{background:transparent;color:#075985}.college-table-dialog{width:min(460px,calc(100% - 32px));padding:24px;border:1px solid #dbe4ef;border-radius:14px}.college-table-dialog::backdrop{background:#142b4a88}.college-table-filter{margin:0 0 14px;max-width:380px}th[aria-sort=ascending] button:after{content:" ↑"}th[aria-sort=descending] button:after{content:" ↓"}</style>
 </head>
-<body>
+<body data-college-admin>
 <a class="skip-link" href="#main-content">Skip to main content</a>
 <header aria-label="Admin navigation">
 <strong>GPCS Admin</strong>

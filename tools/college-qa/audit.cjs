@@ -20,6 +20,7 @@ const pages = ['/', '/about', '/departments', '/programmes/cs', '/admissions', '
         const response = await page.goto(origin+path); assert.equal(response.status(),200,path);
         await page.waitForLoadState('networkidle');
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+        if (overflow) console.log('Overflow details',await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,nodes:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,15).map(e=>({tag:e.tagName,class:String(e.className),x:e.getBoundingClientRect().x,width:e.getBoundingClientRect().width}))})));
         assert.equal(overflow,false,`${engine} ${width} ${path}: overflow`);
         assert.equal(await page.locator('h1:visible').count(),1,`${path}: one visible H1`);
         assert.equal(await page.locator('img').evaluateAll(imgs=>imgs.some(img=>img.complete&&!img.naturalWidth)),false,`${path}: broken image`);

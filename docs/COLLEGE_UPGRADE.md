@@ -24,6 +24,7 @@ Existing Admin sections: dashboard, users, papers, notes, gallery, messages, sub
 | Shared inner-page theme control needed the original behaviour | Extract and reuse original theme logic | `public/assets/gpcs-theme.js`, college layout |
 | Absolute shared-header legacy links needed client navigation compatibility | Accept both historical relative and root-relative portal links | portal view |
 | Admin tables lacked quick row filtering and sorting | Add current-page sort buttons and a modal row filter; preserve original server pagination and action positions | admin layout, `gpcs-college.js` |
+| Dependency audit flagged two advisories in the existing CommonMark 2.10.1 lock | Upgrade CommonMark to 2.10.3 and its compatible PHP 8.0 polyfill; audit now reports no advisories | `composer.lock` |
 | New search dialog conflicted with legacy Escape handling | Explicit dialog Escape/cancel handling | `gpcs-college.js` |
 
 Live hosting audit: `https://gpcsportal.up.railway.app` returned Railway fallback 404 on 1 October 2026. Latest listed web deployments were REMOVED; this predates these changes. Railway still uses main and Wait-for-CI (`checkSuites`) is true. Hosting, volume size, environment values and deployment state were not mutated.
@@ -62,7 +63,7 @@ tools/college-qa/
 docs/COLLEGE_UPGRADE.md
 ```
 
-Modified existing files: `.gitignore`, `public/robots.txt`, `resources/views/portal.blade.php`, `resources/views/admin/layout.blade.php`, `routes/web.php`, `tests/Feature/LaunchReadinessAuditTest.php`. The full source bundle includes complete files at these exact repository-relative paths.
+Modified existing files: `.gitignore`, `public/robots.txt`, `resources/views/portal.blade.php`, `resources/views/admin/layout.blade.php`, `routes/web.php`, `tests/Feature/LaunchReadinessAuditTest.php`, `composer.lock`. The full source bundle includes complete files at these exact repository-relative paths.
 
 ## Run instructions
 
@@ -80,7 +81,7 @@ php artisan db:seed --class=SubjectMasterSeeder
 php artisan serve
 ```
 
-For an existing installation, retain `.env`, database and uploaded files; install dependencies from the unchanged lock file and run `php artisan optimize:clear`. This upgrade adds no database migration and requires no production data changes. Production Admin provisioning continues using the existing environment-based mechanism.
+For an existing installation, retain `.env`, database and uploaded files; install dependencies from the updated lock file and run `php artisan optimize:clear`. This upgrade adds no database migration and requires no production data changes. Production Admin provisioning continues using the existing environment-based mechanism.
 
 New pages: `/about`, `/departments`, `/programmes/{cs|me|ee|et}`, `/admissions`, `/faculty`, `/facilities`, `/placements`, `/notices`, `/gallery`, `/contact`, `/faq`, `/sitemap.xml`. Existing `/#gallery`, `/#contact` and all original portal/APIs remain intact. Public information routes do not expose account details, unapproved uploads or protected APIs.
 
@@ -124,3 +125,7 @@ The locked existing header remains in place with additive college navigation. No
 Final mobile Lighthouse (local isolated PHP preview, Chromium): Performance 90, Accessibility 100, Best Practices 100, SEO 100. These are lab results, not production guarantees. Smaller responsive campus sources and a thumbnail logo are served; the original high-resolution logo is fetched only when its preview is opened. Original PNG and full-resolution logo assets remain available.
 
 The readable compatibility stylesheet is `resources/css/gpcs-portal.css`; regenerate the shipped asset from the repository root with `node tools/college-qa/build-css.cjs` after `npm ci --prefix tools/college-qa`. Re-run the browser audit whenever selectors or styles change. There is no build step required to run the delivered application.
+
+Dependency security: CI identified [GHSA-97jj-33gv-5xf9](https://github.com/thephpleague/commonmark/security/advisories/GHSA-97jj-33gv-5xf9) and [GHSA-3q6v-r5mr-hxv8](https://github.com/thephpleague/commonmark/security/advisories/GHSA-3q6v-r5mr-hxv8) affecting the original CommonMark 2.10.1 dependency. The compatible patch update locks CommonMark 2.10.3 and symfony/polyfill-php80 1.43.0; Composer audit reports no advisories. This does not establish that the portal was previously exploited.
+
+WebKit CI identified fixed ambient decorations extending outside the viewport. Their bounds are now constrained without changing any interactive control placement.

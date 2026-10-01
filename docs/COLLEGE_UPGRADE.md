@@ -25,6 +25,9 @@ Existing Admin sections: dashboard, users, papers, notes, gallery, messages, sub
 | Absolute shared-header legacy links needed client navigation compatibility | Accept both historical relative and root-relative portal links | portal view |
 | Admin tables lacked quick row filtering and sorting | Add current-page sort buttons and a modal row filter; preserve original server pagination and action positions | admin layout, `gpcs-college.js` |
 | Dependency audit flagged two advisories in the existing CommonMark 2.10.1 lock | Upgrade CommonMark to 2.10.3 and its compatible PHP 8.0 polyfill; audit now reports no advisories | `composer.lock` |
+| Existing CSP forced development HTTP assets to HTTPS | Keep upgrade-insecure-requests on HTTPS; add HTTP/HTTPS regression coverage | `SecurityHeaders.php`, public-page tests |
+| Ambient decoration could extend beyond the viewport | Bound decorations inside their container | `gpcs-college.css` |
+| Public search could suggest inactive programme routes | Filter search programmes using active configured branches | college header, `gpcs-college.js` |
 | New search dialog conflicted with legacy Escape handling | Explicit dialog Escape/cancel handling | `gpcs-college.js` |
 
 Live hosting audit: `https://gpcsportal.up.railway.app` returned Railway fallback 404 on 1 October 2026. Latest listed web deployments were REMOVED; this predates these changes. Railway still uses main and Wait-for-CI (`checkSuites`) is true. Hosting, volume size, environment values and deployment state were not mutated.
@@ -63,7 +66,7 @@ tools/college-qa/
 docs/COLLEGE_UPGRADE.md
 ```
 
-Modified existing files: `.gitignore`, `public/robots.txt`, `resources/views/portal.blade.php`, `resources/views/admin/layout.blade.php`, `routes/web.php`, `tests/Feature/LaunchReadinessAuditTest.php`, `composer.lock`. The full source bundle includes complete files at these exact repository-relative paths.
+Modified existing files: `.gitignore`, `public/robots.txt`, `resources/views/portal.blade.php`, `resources/views/admin/layout.blade.php`, `routes/web.php`, `tests/Feature/LaunchReadinessAuditTest.php`, `composer.lock`, `app/Http/Middleware/SecurityHeaders.php`. The full source bundle includes complete files at these exact repository-relative paths.
 
 ## Run instructions
 
@@ -113,13 +116,13 @@ The locked existing header remains in place with additive college navigation. No
 
 ## Final verification
 
-- Laravel/PHP regression suite: 69 tests and 525 assertions passed, including original authentication, logout, access control, metadata, moderation, storage and upload checks plus new public-page tests.
-- Chromium 153: 48 page/viewport combinations passed (12 pages × 360/768/1024/1440 px), with no page horizontal overflow, loaded-image failures or console errors/warnings.
+- Laravel/PHP regression suite: 70 tests and 529 assertions passed, including original authentication, logout, access control, metadata, moderation, storage and upload checks plus new public-page tests.
+- Chromium, Firefox and WebKit: 144 page/viewport combinations passed (3 engines × 12 pages × 360/768/1024/1440 px), with no page horizontal overflow, loaded-image failures or console errors/warnings. Local Chromium checks also passed.
 - Automated axe WCAG A/AA scans passed on all 12 pages at 360 and 1440 px. This is automated coverage, not a claim of a manual assistive-technology certification.
 - Search filtering/Escape close and Student-to-Faculty selector interactions passed.
 - PHP syntax, JavaScript syntax, Blade compilation, route boot and Composer validation passed.
 - Desktop/mobile screenshots inspected visually.
-- Firefox/WebKit browser verification is configured in the draft PR workflow; its result is reported separately. Actual Edge and Safari devices have not been tested locally. Public outbound third-party destinations, real production account journeys, MySQL runtime and mail delivery were not exercised against production. Existing backend tests use isolated SQLite.
+- Both GitHub Actions workflows passed for code commit `f5e6d0918e3902370fc0d9bd847c1552576855e1`: [code quality](https://github.com/gpcsportal/GPCSPORTAL-/actions/runs/36865727435) and [three-engine browser QA](https://github.com/gpcsportal/GPCSPORTAL-/actions/runs/36865727876). Actual Edge and Safari devices have not been tested. Public outbound third-party destinations, real production account journeys, MySQL runtime and mail delivery were not exercised against production. Existing backend tests use isolated SQLite.
 - Live deployment is blocked by the pre-existing Railway fallback 404; this source upgrade has not been deployed.
 
 Final mobile Lighthouse (local isolated PHP preview, Chromium): Performance 90, Accessibility 100, Best Practices 100, SEO 100. These are lab results, not production guarantees. Smaller responsive campus sources and a thumbnail logo are served; the original high-resolution logo is fetched only when its preview is opened. Original PNG and full-resolution logo assets remain available.
@@ -131,3 +134,5 @@ Dependency security: CI identified [GHSA-97jj-33gv-5xf9](https://github.com/thep
 WebKit CI exposed that the existing CSP upgraded assets to HTTPS even on a plain HTTP development server. Apply `upgrade-insecure-requests` only to secure requests; production HTTPS retains the directive. Ambient decorations are also bounded inside the viewport.
 
 Additional isolated-browser checks: all 11 Admin sections returned 200 and passed automated WCAG A/AA scans. Admin current-page row filtering and sorting were exercised successfully using disposable SQLite QA accounts. Student and Faculty Sign In scans passed at both 360 and 1440 px. No production accounts or credentials were used.
+
+Security compatibility limitation: the existing CSP still permits inline scripts/styles because the original portal depends on inline handlers and Blade-generated scripts. The new search/filter code uses text-based DOM construction for user-entered queries; no client credentials or database secrets were added. A stricter nonce-based CSP has not been verified for all original portal interactions.
